@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 Item name,Hindi_Name,EXPDATE,Inv date,MFG DATE,Received Qty,sgstrate,Inv No,cgstrate,Batch,Item_Net_Amount,Supplier GST,GST Perc,HSN Code,igstrate,mrp,igst,Supplier Name
+=======
+,,,,,8811,,,,,1559555.34,,,,,,,
+Item name,Hindi_Name,EXPDATE,Inv date,MFG DATE,Received Qty,sgstrate,Inv No,cgstrate,Batch,Item Net Amount,Supplier GST,GST Perc,HSN Code,igstrate,mrp,igst,Supplier Name
+>>>>>>> origin/main
 APPLE VINEGAR 500 ML,सेब का सिरका 500 मि.ली.,05-09-2025,04-04-2024,14-03-2024,1,9,TI53AAA2425,9,AB52400009,2463.27,05AAECK5765H1ZE,18,22090090,0,130,0,KANHA JI DISTRIBUTORS
 DOODH BISCUIT 35 GM (200 PC),दूध बिस्किट 35 ग्राम (200 नग),14-09-2024,04-04-2024,18-03-2024,1,9,TI53AAA2425,9,CL24/BP1,844.88,05AAECK5765H1ZE,18,19053100,0,5,0,KANHA JI DISTRIBUTORS
 ALOEVERA KANTI BODY CLN.150G MNTHLY PACK,एलोवेरा कान्ति बॉडी क्लीन्ज़र 150 ग्राम मासिक पैक,07-02-2026,04-04-2024,08-02-2024,1,9,TI53AAA2425,9,AAUI240007,2228.31,05AAECK5765H1ZE,18,34011941,0,115,0,KANHA JI DISTRIBUTORS
