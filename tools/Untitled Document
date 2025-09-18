@@ -1,0 +1,35 @@
+<?php
+require_once 'config/db.php'; // assumes $conn is your mysqli connection
+
+header('Content-Type: text/plain');
+header('Content-Disposition: attachment; filename="bharat_dump.sql"');
+
+$tables = [];
+$result = $conn->query("SHOW TABLES");
+while ($row = $result->fetch_array()) {
+    $tables[] = $row[0];
+}
+
+foreach ($tables as $table) {
+    // Dump table structure
+    $res = $conn->query("SHOW CREATE TABLE `$table`");
+    $row = $res->fetch_assoc();
+    echo "\n-- Table structure for `$table`\n";
+    echo "DROP TABLE IF EXISTS `$table`;\n";
+    echo $row['Create Table'] . ";\n";
+
+    // Dump table data
+    $res = $conn->query("SELECT * FROM `$table`");
+    if ($res->num_rows > 0) {
+        echo "\n-- Dumping data for `$table`\n";
+        while ($r = $res->fetch_assoc()) {
+            $vals = array_map(function($v) use ($conn) {
+                return isset($v) ? "'" . $conn->real_escape_string($v) . "'" : "NULL";
+            }, $r);
+            echo "INSERT INTO `$table` VALUES (" . implode(", ", $vals) . ");\n";
+        }
+    }
+}
+$conn->close();
+?>
+

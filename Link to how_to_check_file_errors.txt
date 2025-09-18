@@ -1,1 +1,0 @@
-/home/mukund/Documents/gst_work/gst_app/tool/how_to_check_file_errors.txt
