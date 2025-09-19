@@ -3359,16 +3359,14 @@ BEGIN
   IF NEW.series_code IS NOT NULL AND (NEW.seq_no IS NULL OR NEW.seq_no = 0) THEN
     UPDATE invoice_series
        SET current_no = LAST_INSERT_ID(current_no + 1)
-     WHERE company_id = NEW.company_id
-       AND inv_type   = NEW.inv_type
+     WHERE inv_type   = NEW.inv_type
        AND series_code= NEW.series_code;
 
     SET v_next = LAST_INSERT_ID();
 
     SELECT prefix INTO v_prefix
       FROM invoice_series
-     WHERE company_id = NEW.company_id
-       AND inv_type   = NEW.inv_type
+     WHERE inv_type   = NEW.inv_type
        AND series_code= NEW.series_code
      LIMIT 1;
 
@@ -3382,8 +3380,7 @@ BEGIN
   IF NEW.series_code IS NOT NULL AND NEW.seq_no IS NOT NULL AND (NEW.invoice_no IS NULL OR NEW.invoice_no='') THEN
     SELECT prefix INTO v_prefix
       FROM invoice_series
-     WHERE company_id = NEW.company_id
-       AND inv_type   = NEW.inv_type
+     WHERE inv_type   = NEW.inv_type
        AND series_code= NEW.series_code
      LIMIT 1;
 
@@ -4311,7 +4308,7 @@ CREATE TABLE `journal_entries` (
   `notes` text DEFAULT NULL,
   `source` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_company_date` (`entry_date`)
+  KEY `idx_entry_date` (`entry_date`)
 ) ENGINE=InnoDB AUTO_INCREMENT=313 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -8140,92 +8137,6 @@ SET character_set_client = @saved_cs_client;
 --
 -- Dumping routines for database 'gst_accounting'
 --
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
-/*!50003 DROP FUNCTION IF EXISTS `HasChildren` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb3 */ ;
-/*!50003 SET character_set_results = utf8mb3 */ ;
-/*!50003 SET collation_connection  = utf8mb3_general_ci */ ;
-DELIMITER ;;
-CREATE DEFINER=`gstwork`@`localhost` FUNCTION `HasChildren`(record_id INT) RETURNS tinyint(1)
-    READS SQL DATA
-    DETERMINISTIC
-BEGIN
-    DECLARE child_count INT DEFAULT 0;
-    
-    SELECT COUNT(*) INTO child_count 
-    FROM hierarchical_records 
-    WHERE parent_id = record_id AND status = 'active';
-    
-    RETURN child_count > 0;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `GetHierarchyPath` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb3 */ ;
-/*!50003 SET character_set_results = utf8mb3 */ ;
-/*!50003 SET collation_connection  = utf8mb3_general_ci */ ;
-DELIMITER ;;
-CREATE DEFINER=`gstwork`@`localhost` PROCEDURE `GetHierarchyPath`(IN record_id INT)
-BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE current_id INT DEFAULT record_id;
-    DECLARE current_title VARCHAR(255);
-    DECLARE current_parent INT;
-    
-    
-    CREATE TEMPORARY TABLE IF NOT EXISTS temp_path (
-        level_order INT AUTO_INCREMENT PRIMARY KEY,
-        id INT,
-        title VARCHAR(255),
-        parent_id INT
-    );
-    
-    
-    DELETE FROM temp_path;
-    
-    
-    path_loop: LOOP
-        SELECT id, title, parent_id INTO current_id, current_title, current_parent
-        FROM hierarchical_records 
-        WHERE id = current_id;
-        
-        IF current_id IS NULL THEN
-            LEAVE path_loop;
-        END IF;
-        
-        INSERT INTO temp_path (id, title, parent_id) VALUES (current_id, current_title, current_parent);
-        
-        IF current_parent = 0 OR current_parent IS NULL THEN
-            LEAVE path_loop;
-        END IF;
-        
-        SET current_id = current_parent;
-    END LOOP;
-    
-    
-    SELECT id, title, parent_id, level_order 
-    FROM temp_path 
-    ORDER BY level_order DESC;
-    
-    DROP TEMPORARY TABLE temp_path;
-END ;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Final view structure for view `v_customer_suggestions`
