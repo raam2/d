@@ -7328,3 +7328,42 @@ DELIMITER ;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-09-19 15:21:48
+
+-- 
+-- Schema Updates for Accounting Module Compatibility
+-- Updated journal_entries and journal_lines tables to match
+-- the expectations of the PHP accounting modules and lib/accounting.php
+--
+-- Key changes:
+-- 1. journal_entries: Added total_debit, total_credit, source_type, source_id, posted_by columns
+-- 2. journal_lines: Complete restructure with entry_id, account_code, debit_amount, credit_amount columns
+-- 3. Updated foreign key references to use entry_id instead of journal_id
+--
+-- Test queries that now work with the updated schema:
+--
+-- Dashboard account balance query:
+-- SELECT COALESCE(SUM(l.debit_amount - l.credit_amount), 0) as balance 
+-- FROM accounts a 
+-- LEFT JOIN journal_lines l ON a.code = l.account_code 
+-- LEFT JOIN journal_entries e ON l.entry_id = e.id 
+-- WHERE a.code = '1010';
+--
+-- P&L statement query:
+-- SELECT a.code, a.name, 
+--        COALESCE(SUM(l.debit_amount), 0) as total_debit,
+--        COALESCE(SUM(l.credit_amount), 0) as total_credit
+-- FROM accounts a 
+-- LEFT JOIN journal_lines l ON a.code = l.account_code 
+-- LEFT JOIN journal_entries e ON l.entry_id = e.id 
+-- WHERE a.account_type IN ('INCOME', 'EXPENSE') 
+-- GROUP BY a.code, a.name;
+--
+-- Insert journal entry with lines:
+-- INSERT INTO journal_entries (entry_date, reference, description, total_debit, total_credit, source_type) 
+-- VALUES ('2024-01-01', 'TEST001', 'Test Entry', 1000.00, 1000.00, 'MANUAL');
+-- 
+-- INSERT INTO journal_lines (entry_id, account_code, debit_amount, credit_amount, description, line_number) 
+-- VALUES (LAST_INSERT_ID(), '1010', 1000.00, 0.00, 'Cash received', 1);
+-- 
+-- INSERT INTO journal_lines (entry_id, account_code, debit_amount, credit_amount, description, line_number) 
+-- VALUES (LAST_INSERT_ID(), '4100', 0.00, 1000.00, 'Sales revenue', 2);
