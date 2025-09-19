@@ -1,0 +1,755 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="gst_india_app"
+[ -d "$APP_DIR" ] || { echo "ERROR: $APP_DIR not found. Generate base app first."; exit 1; }
+
+echo "Upgrading $APP_DIR to full accounting..."
+
+# 0) Extend routing in index.php with new modules
+php -r '
+$f="gst_india_app/index.php";
+$s=file_get_contents($f);
+$s=preg_replace(
+    "/\\$allowed\\s*=\\s*\
+
+\[[^\\]
+
+]+\\]
+
+;/m",
+    "$allowed = [" .
+    "\"dashboard\",\"import_receipts\",\"invoice_preview\",\"invoice_commit\",\"gst_summary\",\"vendor_manage\",\"rollback\"," .
+    "\"chart_of_accounts\",\"journal_new\",\"ledger\",\"trial_balance\",\"pl\",\"balance_sheet\",\"reconcile\",\"post_invoices\"," .
+    "\"settings\",\"contacts\",\"sales_new\",\"purchase_new\",\"payment_new\",\"receipt_new\",\"credit_note\",\"debit_note\"," .
+    "\"aging_ar\",\"aging_ap\",\"cashflow\"" .
+    "];",
+    $s
+);
+file_put_contents($f,$s);
+echo "Patched index.php modules.\n";
+'
+
+# 1) Settings and migrations
+cat > "$APP_DIR/actions/settings.php" <<'PHP'
+<?php
+// App settings loaded from DB; falls back to sane defaults.
+function app_setting(PDO $db, string $key, $default=null) {
+    $db->exec("CREATE TABLE IF NOT EXISTS app_settings (skey VARCHAR(100) PRIMARY KEY, sval TEXT)");
+    $st=$db->prepare("SELECT sval FROM app_settings WHERE skey=?"); $st->execute([$key]);
+    $row=$st->fetch(); return $row? $row['sval'] : $default;
+}
+function set_app_setting(PDO $db, string $key, string $val) {
+    $db->exec("CREATE TABLE IF NOT EXISTS app_settings (skey VARCHAR(100) PRIMARY KEY, sval TEXT)");
+    $st=$db->prepare("INSERT INTO app_settings(skey,sval) VALUES(?,?) ON DUPLICATE KEY UPDATE sval=VALUES(sval)");
+    $st->execute([$key,$val]);
+}
+PHP
+
+cat > "$APP_DIR/actions/migrations_full.php" <<'PHP'
+<?php
+require_once __DIR__ . '/db_connect.php';
+
+// Contacts (customers/vendors)
+$db->exec("CREATE TABLE IF NOT EXISTS contacts(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  type ENUM('customer','vendor') NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  gstin VARCHAR(20) NULL,
+  state_code VARCHAR(5) NULL,
+  UNIQUE KEY(name,type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Items (optional, for line details)
+$db->exec("CREATE TABLE IF NOT EXISTS items(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sku VARCHAR(100) UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  hsn_sac VARCHAR(20) NULL,
+  gst_rate DECIMAL(5,2) DEFAULT 18.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Sales and Purchase invoices (headers)
+$db->exec("CREATE TABLE IF NOT EXISTS sales_invoices(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  inv_no VARCHAR(50) UNIQUE,
+  idate DATE NOT NULL,
+  customer_id INT NOT NULL,
+  place_of_supply VARCHAR(5) NOT NULL,
+  taxable DECIMAL(18,2) DEFAULT 0,
+  cgst DECIMAL(18,2) DEFAULT 0,
+  sgst DECIMAL(18,2) DEFAULT 0,
+  igst DECIMAL(18,2) DEFAULT 0,
+  total DECIMAL(18,2) DEFAULT 0,
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(customer_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$db->exec("CREATE TABLE IF NOT EXISTS purchase_invoices(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  bill_no VARCHAR(50),
+  idate DATE NOT NULL,
+  vendor_id INT NOT NULL,
+  place_of_supply VARCHAR(5) NOT NULL,
+  taxable DECIMAL(18,2) DEFAULT 0,
+  cgst DECIMAL(18,2) DEFAULT 0,
+  sgst DECIMAL(18,2) DEFAULT 0,
+  igst DECIMAL(18,2) DEFAULT 0,
+  total DECIMAL(18,2) DEFAULT 0,
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(vendor_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Lines
+$db->exec("CREATE TABLE IF NOT EXISTS sales_lines(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_id INT NOT NULL,
+  item_id INT NULL,
+  description VARCHAR(255),
+  qty DECIMAL(18,2) DEFAULT 1,
+  rate DECIMAL(18,2) DEFAULT 0,
+  amount DECIMAL(18,2) DEFAULT 0,
+  gst_rate DECIMAL(5,2) DEFAULT 18.00,
+  FOREIGN KEY(invoice_id) REFERENCES sales_invoices(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$db->exec("CREATE TABLE IF NOT EXISTS purchase_lines(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  invoice_id INT NOT NULL,
+  item_id INT NULL,
+  description VARCHAR(255),
+  qty DECIMAL(18,2) DEFAULT 1,
+  rate DECIMAL(18,2) DEFAULT 0,
+  amount DECIMAL(18,2) DEFAULT 0,
+  gst_rate DECIMAL(5,2) DEFAULT 18.00,
+  FOREIGN KEY(invoice_id) REFERENCES purchase_invoices(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Receipts/Payments
+$db->exec("CREATE TABLE IF NOT EXISTS payments(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  pdate DATE NOT NULL,
+  vendor_id INT NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  mode VARCHAR(50) DEFAULT 'Bank',
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(vendor_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$db->exec("CREATE TABLE IF NOT EXISTS receipts(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  rdate DATE NOT NULL,
+  customer_id INT NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  mode VARCHAR(50) DEFAULT 'Bank',
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(customer_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+// Credit/Debit notes
+$db->exec("CREATE TABLE IF NOT EXISTS credit_notes(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cdate DATE NOT NULL,
+  customer_id INT NOT NULL,
+  taxable DECIMAL(18,2) DEFAULT 0,
+  cgst DECIMAL(18,2) DEFAULT 0,
+  sgst DECIMAL(18,2) DEFAULT 0,
+  igst DECIMAL(18,2) DEFAULT 0,
+  total DECIMAL(18,2) DEFAULT 0,
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(customer_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+$db->exec("CREATE TABLE IF NOT EXISTS debit_notes(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ddate DATE NOT NULL,
+  vendor_id INT NOT NULL,
+  taxable DECIMAL(18,2) DEFAULT 0,
+  cgst DECIMAL(18,2) DEFAULT 0,
+  sgst DECIMAL(18,2) DEFAULT 0,
+  igst DECIMAL(18,2) DEFAULT 0,
+  total DECIMAL(18,2) DEFAULT 0,
+  posted_at DATETIME NULL,
+  je_id INT NULL,
+  FOREIGN KEY(vendor_id) REFERENCES contacts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+echo "Full migrations ensured.\n";
+PHP
+
+# 2) Accounting engine (double-entry) with GST split rules
+cat > "$APP_DIR/actions/tax_rules.php" <<'PHP'
+<?php
+require_once __DIR__ . '/settings.php';
+
+// Decide CGST/SGST vs IGST based on org_state vs place_of_supply
+function gst_split(string $org_state, string $pos, float $taxable, float $rate): array {
+    $gst = round($taxable * $rate / 100, 2);
+    if ($org_state === $pos) {
+        $cgst = round($gst/2, 2);
+        $sgst = $gst - $cgst;
+        return ['cgst'=>$cgst,'sgst'=>$sgst,'igst'=>0.0,'total'=>$taxable+$gst];
+    }
+    return ['cgst'=>0.0,'sgst'=>0.0,'igst'=>$gst,'total'=>$taxable+$gst];
+}
+PHP
+
+cat > "$APP_DIR/actions/accounting_full.php" <<'PHP'
+<?php
+require_once __DIR__ . '/db_connect.php';
+require_once __DIR__ . '/accounting_lib.php';
+require_once __DIR__ . '/tax_rules.php';
+require_once __DIR__ . '/settings.php';
+
+function org_state(PDO $db){ return app_setting($db,'org_state','UP'); }
+function bank_ac(){ return '1010'; } // default bank account code
+function ar_ac(){ return '1200'; }
+function ap_ac(){ return '2100'; }
+function sales_ac(){ return '4000'; }
+function purchases_ac(){ return '5000'; }
+function input_cgst(){ return '1402'; }
+function input_sgst(){ return '1403'; }
+function input_igst(){ return '1404'; }
+function output_cgst(){ return '2102'; }
+function output_sgst(){ return '2103'; }
+function output_igst(){ return '2104'; }
+
+function ensure_extended_coa(PDO $db){
+    acc_init_coa($db);
+    // Add specific GST accounts if missing
+    $adds = [
+        ['1402','Input CGST','1000'],
+        ['1403','Input SGST','1000'],
+        ['1404','Input IGST','1000'],
+        ['2102','Output CGST','2000'],
+        ['2103','Output SGST','2000'],
+        ['2104','Output IGST','2000'],
+    ];
+    $ins=$db->prepare("INSERT IGNORE INTO accounts(code,name,parent_code) VALUES(?,?,?)");
+    foreach($adds as $a){ $ins->execute($a); }
+    acc_migrate_ledgers($db);
+}
+
+// Sales invoice posting: Dr AR or Bank, Cr Sales, Cr Output GST*
+function post_sales(PDO $db, int $invoice_id){
+    ensure_extended_coa($db);
+    $iv = $db->prepare("SELECT * FROM sales_invoices WHERE id=? AND posted_at IS NULL");
+    $iv->execute([$invoice_id]); $i=$iv->fetch(); if(!$i) return false;
+
+    $org = org_state($db);
+    $pos = $i['place_of_supply'];
+    $taxable = (float)$i['taxable'];
+    $cgst=(float)$i['cgst']; $sgst=(float)$i['sgst']; $igst=(float)$i['igst'];
+
+    $lines = [
+        ['account_code'=>ar_ac(), 'debit'=>$i['total'], 'credit'=>0],
+        ['account_code'=>sales_ac(), 'debit'=>0, 'credit'=>$taxable],
+    ];
+    if ($cgst>0) $lines[] = ['account_code'=>output_cgst(),'debit'=>0,'credit'=>$cgst];
+    if ($sgst>0) $lines[] = ['account_code'=>output_sgst(),'debit'=>0,'credit'=>$sgst];
+    if ($igst>0) $lines[] = ['account_code'=>output_igst(),'debit'=>0,'credit'=>$igst];
+
+    $eid = acc_post_journal($db, $i['idate'], "Sales Inv #{$i['inv_no']}", $lines);
+    $st=$db->prepare("UPDATE sales_invoices SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$invoice_id]);
+    return $eid;
+}
+
+// Purchase posting: Dr Purchases, Dr Input GST*, Cr AP
+function post_purchase(PDO $db, int $invoice_id){
+    ensure_extended_coa($db);
+    $iv = $db->prepare("SELECT * FROM purchase_invoices WHERE id=? AND posted_at IS NULL");
+    $iv->execute([$invoice_id]); $i=$iv->fetch(); if(!$i) return false;
+
+    $lines = [
+        ['account_code'=>purchases_ac(), 'debit'=>$i['taxable'], 'credit'=>0],
+    ];
+    if ($i['cgst']>0) $lines[] = ['account_code'=>input_cgst(),'debit'=>$i['cgst'],'credit'=>0];
+    if ($i['sgst']>0) $lines[] = ['account_code'=>input_sgst(),'debit'=>$i['sgst'],'credit'=>0];
+    if ($i['igst']>0) $lines[] = ['account_code'=>input_igst(),'debit'=>$i['igst'],'credit'=>0];
+
+    $lines[] = ['account_code'=>ap_ac(), 'debit'=>0,'credit'=>$i['total']];
+
+    $eid = acc_post_journal($db, $i['idate'], "Purchase Bill #{$i['bill_no']}", $lines);
+    $st=$db->prepare("UPDATE purchase_invoices SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$invoice_id]);
+    return $eid;
+}
+
+// Receipt: Dr Bank, Cr AR
+function post_receipt(PDO $db, int $rid){
+    ensure_extended_coa($db);
+    $r = $db->prepare("SELECT * FROM receipts WHERE id=? AND posted_at IS NULL");
+    $r->execute([$rid]); $x=$r->fetch(); if(!$x) return false;
+    $eid = acc_post_journal($db, $x['rdate'], "Receipt #$rid", [
+        ['account_code'=>bank_ac(), 'debit'=>$x['amount'],'credit'=>0],
+        ['account_code'=>ar_ac(),   'debit'=>0,'credit'=>$x['amount']],
+    ]);
+    $st=$db->prepare("UPDATE receipts SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$rid]);
+    return $eid;
+}
+
+// Payment: Dr AP, Cr Bank
+function post_payment(PDO $db, int $pid){
+    ensure_extended_coa($db);
+    $p = $db->prepare("SELECT * FROM payments WHERE id=? AND posted_at IS NULL");
+    $p->execute([$pid]); $x=$p->fetch(); if(!$x) return false;
+    $eid = acc_post_journal($db, $x['pdate'], "Payment #$pid", [
+        ['account_code'=>ap_ac(),   'debit'=>$x['amount'],'credit'=>0],
+        ['account_code'=>bank_ac(), 'debit'=>0,'credit'=>$x['amount']],
+    ]);
+    $st=$db->prepare("UPDATE payments SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$pid]);
+    return $eid;
+}
+
+// Credit note: Dr Sales Returns (use 5001), Dr Output GST*, Cr AR
+function post_credit_note(PDO $db, int $cid){
+    ensure_extended_coa($db);
+    // Ensure Sales Returns account
+    $db->prepare("INSERT IGNORE INTO accounts(code,name,parent_code) VALUES(?,?,?)")->execute(['5001','Sales Returns','5000']);
+    $c = $db->prepare("SELECT * FROM credit_notes WHERE id=? AND posted_at IS NULL");
+    $c->execute([$cid]); $x=$c->fetch(); if(!$x) return false;
+
+    $lines = [
+        ['account_code'=>'5001','debit'=>$x['taxable'],'credit'=>0],
+    ];
+    if ($x['cgst']>0) $lines[] = ['account_code'=>output_cgst(),'debit'=>$x['cgst'],'credit'=>0];
+    if ($x['sgst']>0) $lines[] = ['account_code'=>output_sgst(),'debit'=>$x['sgst'],'credit'=>0];
+    if ($x['igst']>0) $lines[] = ['account_code'=>output_igst(),'debit'=>$x['igst'],'credit'=>0];
+    $lines[] = ['account_code'=>ar_ac(),'debit'=>0,'credit'=>$x['total']];
+
+    $eid = acc_post_journal($db, $x['cdate'], "Credit Note #$cid", $lines);
+    $st=$db->prepare("UPDATE credit_notes SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$cid]);
+    return $eid;
+}
+
+// Debit note: Dr AP, Cr Purchase Returns (use 4001) + Input GST reversal
+function post_debit_note(PDO $db, int $did){
+    ensure_extended_coa($db);
+    $db->prepare("INSERT IGNORE INTO accounts(code,name,parent_code) VALUES(?,?,?)")->execute(['4001','Purchase Returns','4000']);
+    $d = $db->prepare("SELECT * FROM debit_notes WHERE id=? AND posted_at IS NULL");
+    $d->execute([$did]); $x=$d->fetch(); if(!$x) return false;
+
+    $lines = [
+        ['account_code'=>ap_ac(),'debit'=>0,'credit'=>$x['total']],
+        ['account_code'=>'4001','debit'=>0,'credit'=>$x['taxable']],
+    ];
+    if ($x['cgst']>0) $lines[] = ['account_code'=>input_cgst(),'debit'=>0,'credit'=>$x['cgst']];
+    if ($x['sgst']>0) $lines[] = ['account_code'=>input_sgst(),'debit'=>0,'credit'=>$x['sgst']];
+    if ($x['igst']>0) $lines[] = ['account_code'=>input_igst(),'debit'=>0,'credit'=>$x['igst']];
+
+    $eid = acc_post_journal($db, $x['ddate'], "Debit Note #$did", $lines);
+    $st=$db->prepare("UPDATE debit_notes SET posted_at=NOW(), je_id=? WHERE id=?"); $st->execute([$eid,$did]);
+    return $eid;
+}
+PHP
+
+# 3) UI modules: settings, contacts, sales/purchase, payments/receipts, notes, aging, cashflow
+cat > "$APP_DIR/modules/settings.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/settings.php';
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $state = strtoupper(trim($_POST['org_state'] ?? 'UP'));
+    set_app_setting($db,'org_state',$state);
+    echo "<p class='ok'>Saved.</p>";
+}
+$state = app_setting($db,'org_state','UP');
+
+echo "<h2>Settings</h2>
+<form method='POST'>
+  <label>Org State Code (e.g., UP, DL) <input name='org_state' value='".htmlspecialchars($state)."'></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Save</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/contacts.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $type=$_POST['type']??'customer';
+    $name=trim($_POST['name']??'');
+    $gstin=trim($_POST['gstin']??'');
+    $state=trim($_POST['state_code']??'UP');
+    if ($name!=='') {
+        $st=$db->prepare("INSERT INTO contacts(type,name,gstin,state_code) VALUES(?,?,?,?)");
+        try{$st->execute([$type,$name,$gstin,$state]); echo "<p class='ok'>Contact added.</p>";}
+        catch(Throwable $e){ echo "<p class='err'>".$e->getMessage()."</p>";}
+    }
+}
+$rows=$db->query("SELECT * FROM contacts ORDER BY type,name")->fetchAll();
+echo "<h2>Contacts</h2>
+<table class='tbl'><tr><th>ID</th><th>Type</th><th>Name</th><th>GSTIN</th><th>State</th></tr>";
+foreach($rows as $r){
+    echo "<tr><td>{$r['id']}</td><td>{$r['type']}</td><td>".htmlspecialchars($r['name'])."</td><td>".htmlspecialchars($r['gstin'])."</td><td>".htmlspecialchars($r['state_code'])."</td></tr>";
+}
+echo "</table>
+<h3>Add Contact</h3>
+<form method='POST'>
+  <select name='type'><option>customer</option><option>vendor</option></select>
+  <input name='name' placeholder='Name' required>
+  <input name='gstin' placeholder='GSTIN'>
+  <input name='state_code' placeholder='State Code' value='UP'>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Add</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/sales_new.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/settings.php';
+require_once __DIR__ . '/../actions/tax_rules.php';
+
+$org = app_setting($db,'org_state','UP');
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $inv_no=trim($_POST['inv_no']??''); $idate=$_POST['idate']??date('Y-m-d');
+    $cust=(int)($_POST['customer_id']??0); $pos=trim($_POST['place_of_supply']??$org);
+    $taxable=(float)($_POST['taxable']??0); $rate=(float)($_POST['gst_rate']??18);
+    $split = gst_split($org,$pos,$taxable,$rate);
+    $st=$db->prepare("INSERT INTO sales_invoices(inv_no,idate,customer_id,place_of_supply,taxable,cgst,sgst,igst,total)
+                      VALUES(?,?,?,?,?,?,?,?,?)");
+    $st->execute([$inv_no,$idate,$cust,$pos,$taxable,$split['cgst'],$split['sgst'],$split['igst'],$split['total']]);
+    echo "<p class='ok'>Sales invoice created.</p>";
+}
+$customers=$db->query("SELECT id,name,state_code FROM contacts WHERE type='customer' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])." ({$r['state_code']})</option>"; } return $o; }
+
+echo "<h2>New Sales Invoice</h2>
+<form method='POST'>
+  <label>No <input name='inv_no' required></label>
+  <label>Date <input type='date' name='idate' value='".date('Y-m-d')."'></label>
+  <label>Customer <select name='customer_id'>".options($customers)."</select></label>
+  <label>Place of Supply <input name='place_of_supply' value='".htmlspecialchars($org)."'></label>
+  <label>Taxable <input type='number' step='0.01' name='taxable' required></label>
+  <label>GST Rate % <input type='number' step='0.1' name='gst_rate' value='18'></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Create</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/purchase_new.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/settings.php';
+require_once __DIR__ . '/../actions/tax_rules.php';
+
+$org = app_setting($db,'org_state','UP');
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $bill_no=trim($_POST['bill_no']??''); $idate=$_POST['idate']??date('Y-m-d');
+    $vendor=(int)($_POST['vendor_id']??0); $pos=trim($_POST['place_of_supply']??$org);
+    $taxable=(float)($_POST['taxable']??0); $rate=(float)($_POST['gst_rate']??18);
+    $split = gst_split($org,$pos,$taxable,$rate);
+    $st=$db->prepare("INSERT INTO purchase_invoices(bill_no,idate,vendor_id,place_of_supply,taxable,cgst,sgst,igst,total)
+                      VALUES(?,?,?,?,?,?,?,?,?)");
+    $st->execute([$bill_no,$idate,$vendor,$pos,$taxable,$split['cgst'],$split['sgst'],$split['igst'],$split['total']]);
+    echo "<p class='ok'>Purchase bill created.</p>";
+}
+$vendors=$db->query("SELECT id,name,state_code FROM contacts WHERE type='vendor' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])." ({$r['state_code']})</option>"; } return $o; }
+
+echo "<h2>New Purchase Bill</h2>
+<form method='POST'>
+  <label>Bill No <input name='bill_no' required></label>
+  <label>Date <input type='date' name='idate' value='".date('Y-m-d')."'></label>
+  <label>Vendor <select name='vendor_id'>".options($vendors)."</select></label>
+  <label>Place of Supply <input name='place_of_supply' value='".htmlspecialchars($org)."'></label>
+  <label>Taxable <input type='number' step='0.01' name='taxable' required></label>
+  <label>GST Rate % <input type='number' step='0.1' name='gst_rate' value='18'></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Create</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/receipt_new.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $rdate=$_POST['rdate']??date('Y-m-d'); $cust=(int)($_POST['customer_id']??0); $amt=(float)($_POST['amount']??0);
+    $st=$db->prepare("INSERT INTO receipts(rdate,customer_id,amount) VALUES(?,?,?)"); $st->execute([$rdate,$cust,$amt]);
+    echo "<p class=\"ok\">Receipt saved. Post it from Post Invoices or add auto-post here.</p>";
+}
+$cust=$db->query("SELECT id,name FROM contacts WHERE type='customer' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])."</option>"; } return $o; }
+
+echo "<h2>New Receipt</h2>
+<form method='POST'>
+  <label>Date <input type='date' name='rdate' value='".date('Y-m-d')."'></label>
+  <label>Customer <select name='customer_id'>".options($cust)."</select></label>
+  <label>Amount <input type='number' step='0.01' name='amount' required></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Save</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/payment_new.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $pdate=$_POST['pdate']??date('Y-m-d'); $ven=(int)($_POST['vendor_id']??0); $amt=(float)($_POST['amount']??0);
+    $st=$db->prepare("INSERT INTO payments(pdate,vendor_id,amount) VALUES(?,?,?)"); $st->execute([$pdate,$ven,$amt]);
+    echo "<p class='ok'>Payment saved.</p>";
+}
+$ven=$db->query("SELECT id,name FROM contacts WHERE type='vendor' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])."</option>"; } return $o; }
+
+echo "<h2>New Payment</h2>
+<form method='POST'>
+  <label>Date <input type='date' name='pdate' value='".date('Y-m-d')."'></label>
+  <label>Vendor <select name='vendor_id'>".options($ven)."</select></label>
+  <label>Amount <input type='number' step='0.01' name='amount' required></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Save</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/credit_note.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/settings.php';
+require_once __DIR__ . '/../actions/tax_rules.php';
+
+$org = app_setting($db,'org_state','UP');
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $cdate=$_POST['cdate']??date('Y-m-d'); $cust=(int)($_POST['customer_id']??0); $pos=$_POST['place_of_supply']??$org;
+    $taxable=(float)($_POST['taxable']??0); $rate=(float)($_POST['gst_rate']??18);
+    $split=gst_split($org,$pos,$taxable,$rate);
+    $st=$db->prepare("INSERT INTO credit_notes(cdate,customer_id,taxable,cgst,sgst,igst,total) VALUES(?,?,?,?,?,?,?)");
+    $st->execute([$cdate,$cust,$taxable,$split['cgst'],$split['sgst'],$split['igst'],$split['total']]);
+    echo "<p class='ok'>Credit note saved.</p>";
+}
+$cust=$db->query("SELECT id,name,state_code FROM contacts WHERE type='customer' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])." ({$r['state_code']})</option>"; } return $o; }
+
+echo "<h2>Credit Note</h2>
+<form method='POST'>
+  <label>Date <input type='date' name='cdate' value='".date('Y-m-d')."'></label>
+  <label>Customer <select name='customer_id'>".options($cust)."</select></label>
+  <label>Place of Supply <input name='place_of_supply' value='".htmlspecialchars($org)."'></label>
+  <label>Taxable <input type='number' step='0.01' name='taxable' required></label>
+  <label>GST Rate % <input type='number' step='0.1' name='gst_rate' value='18'></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Save</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/debit_note.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/settings.php';
+require_once __DIR__ . '/../actions/tax_rules.php';
+
+$org = app_setting($db,'org_state','UP');
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $ddate=$_POST['ddate']??date('Y-m-d'); $ven=(int)($_POST['vendor_id']??0); $pos=$_POST['place_of_supply']??$org;
+    $taxable=(float)($_POST['taxable']??0); $rate=(float)($_POST['gst_rate']??18);
+    $split=gst_split($org,$pos,$taxable,$rate);
+    $st=$db->prepare("INSERT INTO debit_notes(ddate,vendor_id,taxable,cgst,sgst,igst,total) VALUES(?,?,?,?,?,?,?)");
+    $st->execute([$ddate,$ven,$taxable,$split['cgst'],$split['sgst'],$split['igst'],$split['total']]);
+    echo "<p class='ok'>Debit note saved.</p>";
+}
+$ven=$db->query("SELECT id,name,state_code FROM contacts WHERE type='vendor' ORDER BY name")->fetchAll();
+function options($rows){ $o=''; foreach($rows as $r){ $o.="<option value='{$r['id']}'>#{$r['id']} ".htmlspecialchars($r['name'])." ({$r['state_code']})</option>"; } return $o; }
+
+echo "<h2>Debit Note</h2>
+<form method='POST'>
+  <label>Date <input type='date' name='ddate' value='".date('Y-m-d')."'></label>
+  <label>Vendor <select name='vendor_id'>".options($ven)."</select></label>
+  <label>Place of Supply <input name='place_of_supply' value='".htmlspecialchars($org)."'></label>
+  <label>Taxable <input type='number' step='0.01' name='taxable' required></label>
+  <label>GST Rate % <input type='number' step='0.1' name='gst_rate' value='18'></label>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit'>Save</button>
+</form>";
+PHP
+
+cat > "$APP_DIR/modules/aging_ar.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+// Simple AR aging: sum of posted sales - receipts, bucketed by days
+$today = $_GET['asof'] ?? date('Y-m-d');
+echo "<h2>AR Aging as of ".htmlspecialchars($today)."</h2>";
+
+$sales = $db->prepare("SELECT customer_id, SUM(total) amt FROM sales_invoices WHERE idate<=? GROUP BY customer_id");
+$sales->execute([$today]); $s=$sales->fetchAll();
+$rec = $db->prepare("SELECT customer_id, SUM(amount) amt FROM receipts WHERE rdate<=? GROUP BY customer_id");
+$rec->execute([$today]); $r=$rec->fetchAll();
+
+$byCust=[];
+foreach($s as $row){ $byCust[$row['customer_id']]['sales']=(float)$row['amt']; }
+foreach($r as $row){ $byCust[$row['customer_id']]['receipts']=(float)$row['amt']; }
+
+echo "<table class='tbl'><tr><th>Customer</th><th>Balance</th></tr>";
+foreach($byCust as $cid=>$vals){
+    $name = $db->query("SELECT name FROM contacts WHERE id=$cid")->fetch()['name'] ?? ("#$cid");
+    $bal = ($vals['sales'] ?? 0) - ($vals['receipts'] ?? 0);
+    echo "<tr><td>".htmlspecialchars($name)."</td><td>₹".number_format($bal,2)."</td></tr>";
+}
+echo "</table>";
+PHP
+
+cat > "$APP_DIR/modules/aging_ap.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+$today = $_GET['asof'] ?? date('Y-m-d');
+echo "<h2>AP Aging as of ".htmlspecialchars($today)."</h2>";
+
+$pur = $db->prepare("SELECT vendor_id, SUM(total) amt FROM purchase_invoices WHERE idate<=? GROUP BY vendor_id");
+$pur->execute([$today]); $p=$pur->fetchAll();
+$pay = $db->prepare("SELECT vendor_id, SUM(amount) amt FROM payments WHERE pdate<=? GROUP BY vendor_id");
+$pay->execute([$today]); $y=$pay->fetchAll();
+
+$byVen=[];
+foreach($p as $row){ $byVen[$row['vendor_id']]['bills']=(float)$row['amt']; }
+foreach($y as $row){ $byVen[$row['vendor_id']]['pays']=(float)$row['amt']; }
+
+echo "<table class='tbl'><tr><th>Vendor</th><th>Balance</th></tr>";
+foreach($byVen as $vid=>$vals){
+    $name = $db->query("SELECT name FROM contacts WHERE id=$vid")->fetch()['name'] ?? ("#$vid");
+    $bal = ($vals['bills'] ?? 0) - ($vals['pays'] ?? 0);
+    echo "<tr><td>".htmlspecialchars($name)."</td><td>₹".number_format($bal,2)."</td></tr>";
+}
+echo "</table>";
+PHP
+
+cat > "$APP_DIR/modules/cashflow.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+
+$from = $_GET['from'] ?? date('Y-m-01');
+$to   = $_GET['to'] ?? date('Y-m-d');
+
+echo "<h2>Cash Flow (Bank movements) $from to $to</h2>
+<form method='GET'>
+  <input type='hidden' name='module' value='cashflow'>
+  <input type='date' name='from' value='".htmlspecialchars($from)."'>
+  <input type='date' name='to' value='".htmlspecialchars($to)."'>
+  <button type='submit'>Run</button>
+</form>";
+
+$sql="SELECT e.jdate, e.id entry_id, e.narration, l.debit, l.credit
+     FROM journal_lines l JOIN journal_entries e ON e.id=l.entry_id
+     WHERE l.account_code='1010' AND e.jdate BETWEEN ? AND ?
+     ORDER BY e.jdate, e.id";
+$st=$db->prepare($sql); $st->execute([$from,$to]); $rows=$st->fetchAll();
+
+$in=0; $out=0;
+echo "<table class='tbl'><tr><th>Date</th><th>Entry</th><th>In</th><th>Out</th><th>Narration</th></tr>";
+foreach($rows as $r){
+    $in  += (float)$r['debit'];
+    $out += (float)$r['credit'];
+    echo "<tr><td>{$r['jdate']}</td><td>#{$r['entry_id']}</td><td>{$r['debit']}</td><td>{$r['credit']}</td><td>".htmlspecialchars($r['narration'])."</td></tr>";
+}
+echo "<tr><th colspan='2'>Totals</th><th>₹".number_format($in,2)."</th><th>₹".number_format($out,2)."</th><th>Net: ₹".number_format($in-$out,2)."</th></tr>";
+echo "</table>";
+PHP
+
+# 4) Posting UI add-ons: bulk post unposted documents
+cat > "$APP_DIR/modules/post_invoices.php" <<'PHP'
+<?php
+require_once __DIR__ . '/../actions/db_connect.php';
+require_once __DIR__ . '/../actions/accounting_full.php';
+
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+    $posted = 0; $errs = [];
+
+    $ids = $db->query("SELECT id FROM sales_invoices WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_sales($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    $ids = $db->query("SELECT id FROM purchase_invoices WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_purchase($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    $ids = $db->query("SELECT id FROM receipts WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_receipt($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    $ids = $db->query("SELECT id FROM payments WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_payment($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    $ids = $db->query("SELECT id FROM credit_notes WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_credit_note($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    $ids = $db->query("SELECT id FROM debit_notes WHERE posted_at IS NULL ORDER BY id ASC LIMIT 500")->fetchAll();
+    foreach($ids as $r){ try{ if(post_debit_note($db,(int)$r['id'])) $posted++; } catch(Throwable $e){ $errs[]=$e->getMessage(); } }
+
+    echo "<p class='ok'>Posted $posted documents.</p>";
+    if ($errs) echo "<details><summary>Errors</summary><pre>".htmlspecialchars(implode(\"\\n\", $errs))."</pre></details>";
+}
+
+$counts = [
+  'Sales' => $db->query("SELECT COUNT(*) c FROM sales_invoices WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+  'Purchases' => $db->query("SELECT COUNT(*) c FROM purchase_invoices WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+  'Receipts' => $db->query("SELECT COUNT(*) c FROM receipts WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+  'Payments' => $db->query("SELECT COUNT(*) c FROM payments WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+  'Credit Notes' => $db->query("SELECT COUNT(*) c FROM credit_notes WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+  'Debit Notes' => $db->query("SELECT COUNT(*) c FROM debit_notes WHERE posted_at IS NULL")->fetch()['c'] ?? 0,
+];
+
+echo "<h2>Bulk Post Documents</h2><ul>";
+foreach($counts as $k=>$v){ echo "<li>$k: <strong>$v</strong> unposted</li>"; }
+echo "</ul>
+<form method='POST'>
+  <input type='hidden' name='_csrf' value='".htmlspecialchars($_SESSION['_csrf'])."'>
+  <button type='submit' ".(array_sum($counts)==0?'disabled':'').">Post All</button>
+</form>";
+PHP
+
+# 5) Link new modules on dashboard
+php -r '
+$f="gst_india_app/modules/dashboard.php";
+$s=file_get_contents($f);
+$s=str_replace("</ul>", "<li><a href=\"?module=settings\">Settings</a></li>
+<li><a href=\"?module=contacts\">Contacts</a></li>
+<li><a href=\"?module=sales_new\">New Sales Invoice</a></li>
+<li><a href=\"?module=purchase_new\">New Purchase Bill</a></li>
+<li><a href=\"?module=receipt_new\">New Receipt</a></li>
+<li><a href=\"?module=payment_new\">New Payment</a></li>
+<li><a href=\"?module=credit_note\">Credit Note</a></li>
+<li><a href=\"?module=debit_note\">Debit Note</a></li>
+<li><a href=\"?module=chart_of_accounts\">Chart of Accounts</a></li>
+<li><a href=\"?module=journal_new\">Manual Journal</a></li>
+<li><a href=\"?module=ledger\">Ledger</a></li>
+<li><a href=\"?module=trial_balance\">Trial Balance</a></li>
+<li><a href=\"?module=pl\">Profit & Loss</a></li>
+<li><a href=\"?module=balance_sheet\">Balance Sheet</a></li>
+<li><a href=\"?module=cashflow\">Cash Flow</a></li>
+<li><a href=\"?module=aging_ar\">AR Aging</a></li>
+<li><a href=\"?module=aging_ap\">AP Aging</a></li>
+<li><a href=\"?module=post_invoices\">Bulk Post Docs</a></li>
+</ul>", $s);
+file_put_contents($f,$s);
+echo "Dashboard updated.\n";
+'
+
+# 6) Run migrations to ensure new tables exist
+php "$APP_DIR/actions/migrations_full.php"
+
+echo "Full accounting upgrade completed.
+
+Next:
+- Set DB env (optional) or edit $APP_DIR/actions/db_connect.php
+- Start server: php -S 0.0.0.0:8080 -t $APP_DIR
+- Open http://localhost:8080
+
+Key flows:
+- Settings: set Org State Code (affects CGST/SGST vs IGST)
+- Contacts: add customers/vendors
+- Sales/Purchase: create invoices/bills (auto GST split)
+- Receipts/Payments: record money movement
+- Post Invoices: bulk post to ledger (double-entry)
+- Reports: Ledger, Trial Balance, P&L, Balance Sheet, Cash Flow, AR/AP Aging
+"
+

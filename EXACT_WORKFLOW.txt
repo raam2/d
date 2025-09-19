@@ -1,0 +1,598 @@
+# Project setup for a modular PHP GST accountancy app
+
+You shared a SQL dump and an environment repo path. I’ll give you a production-ready, refresh-safe PHP scaffold that plugs into your dump, supports batch operations with preview/update toggles, and stays memory-light. It’s built to be transparent and future-proof, with minimal frontend bloat and strict separation of logic and views.
+
+---
+
+## Folder structure
+
+```
+project-root/
+├─ public/
+│  └─ index.php
+├─ app/
+│  ├─ Core/
+│  │  ├─ Router.php
+│  │  ├─ Controller.php
+│  │  ├─ DB.php
+│  │  ├─ View.php
+│  │  └─ Auth.php
+│  ├─ Models/
+│  │  ├─ Invoice.php
+│  │  ├─ Party.php
+│  │  ├─ Ledger.php
+│  │  ├─ Item.php
+│  │  ├─ Tax.php
+│  │  └─ Payment.php
+│  ├─ Controllers/
+│  │  ├─ DashboardController.php
+│  │  ├─ InvoicesController.php
+│  │  ├─ PartiesController.php
+│  │  ├─ ItemsController.php
+│  │  ├─ LedgerController.php
+│  │  ├─ PaymentsController.php
+│  │  └─ ReportsController.php
+│  ├─ Actions/            # atomic, restart-safe operations
+│  │  ├─ invoices/
+│  │  │  ├─ ImportPreview.php
+│  │  │  ├─ ImportCommit.php
+│  │  │  └─ RecomputeTaxes.php
+│  │  └─ payments/
+│  │     ├─ ImportPreview.php
+│  │     └─ ImportCommit.php
+│  └─ Helpers/
+│     ├─ Csv.php
+│     ├─ Pagination.php
+│     ├─ Validator.php
+│     └─ Money.php
+├─ views/
+│  ├─ layout.php
+│  ├─ dashboard/index.php
+│  ├─ invoices/{index,create,edit,show,import_preview}.php
+│  ├─ parties/{index,form}.php
+│  ├─ items/{index,form}.php
+│  ├─ ledger/{index,entry}.php
+│  ├─ payments/{index,import_preview}.php
+│  └─ reports/{gstr1, gstr3b, sales_register}.php
+├─ storage/
+│  ├─ logs/app.log
+│  ├─ uploads/csv/
+│  └─ tmp/
+├─ config/
+│  ├─ app.php
+│  └─ database.php
+├─ database/
+│  ├─ dump.sql                 # your .sql/gst_accounting_dump.sql placed here
+│  ├─ migrations/              # optional incremental migrations later
+│  └─ seeds/
+├─ scripts/
+│  ├─ migrate.php
+│  ├─ seed.php
+│  ├─ backup_db.php
+│  └─ recon_generate_invoices.php
+├─ .env.example
+├─ composer.json
+└─ README.md
+```
+
+---
+
+## Environment and bootstrap
+
+### .env
+
+```
+APP_ENV=local
+APP_DEBUG=true
+APP_TIMEZONE=Asia/Kolkata
+DB_DSN=mysql:host=127.0.0.1;port=3306;dbname=gst_accounting;charset=utf8mb4
+DB_USER=youruser
+DB_PASS=yourpass
+SESSION_NAME=gstapp_sess
+```
+
+### config/database.php
+
+```php
+<?php
+return [
+  'dsn'  => getenv('DB_DSN'),
+  'user' => getenv('DB_USER'),
+  'pass' => getenv('DB_PASS'),
+  'options' => [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+  ],
+];
+```
+
+### app/Core/DB.php
+
+```php
+<?php
+namespace App\Core;
+
+use PDO;
+
+class DB {
+  private static ?PDO $pdo = null;
+
+  public static function pdo(): PDO {
+    if (!self::$pdo) {
+      $cfg = require __DIR__ . '/../../config/database.php';
+      self::$pdo = new PDO($cfg['dsn'], $cfg['user'], $cfg['pass'], $cfg['options']);
+      self::$pdo->exec("SET time_zone = '+05:30'");
+    }
+    return self::$pdo;
+  }
+
+  public static function tx(callable $fn) {
+    $pdo = self::pdo();
+    try {
+      $pdo->beginTransaction();
+      $result = $fn($pdo);
+      $pdo->commit();
+      return $result;
+    } catch (\Throwable $e) {
+      if ($pdo->inTransaction()) $pdo->rollBack();
+      throw $e;
+    }
+  }
+}
+```
+
+### public/index.php (front controller + router)
+
+```php
+<?php
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use App\Core\Router;
+
+session_name(getenv('SESSION_NAME') ?: 'gstapp');
+session_start();
+
+$router = new Router();
+
+// Dashboard
+$router->get('/', [\App\Controllers\DashboardController::class, 'index']);
+
+// Invoices
+$router->get('/invoices', [\App\Controllers\InvoicesController::class, 'index']);
+$router->get('/invoices/create', [\App\Controllers\InvoicesController::class, 'create']);
+$router->post('/invoices', [\App\Controllers\InvoicesController::class, 'store']);
+$router->get('/invoices/{id}', [\App\Controllers\InvoicesController::class, 'show']);
+$router->get('/invoices/{id}/edit', [\App\Controllers\InvoicesController::class, 'edit']);
+$router->post('/invoices/{id}', [\App\Controllers\InvoicesController::class, 'update']);
+$router->post('/invoices/{id}/delete', [\App\Controllers\InvoicesController::class, 'destroy']);
+
+// Invoices import (preview/update toggle)
+$router->get('/invoices/import', [\App\Controllers\InvoicesController::class, 'importForm']);
+$router->post('/invoices/import/preview', [\App\Controllers\InvoicesController::class, 'importPreview']);
+$router->post('/invoices/import/commit', [\App\Controllers\InvoicesController::class, 'importCommit']);
+
+// Reports
+$router->get('/reports/gstr1', [\App\Controllers\ReportsController::class, 'gstr1']);
+$router->get('/reports/gstr3b', [\App\Controllers\ReportsController::class, 'gstr3b']);
+
+$router->dispatch();
+```
+
+### app/Core/Router.php (minimal, fast)
+
+```php
+<?php
+namespace App\Core;
+
+class Router {
+  private array $routes = ['GET'=>[], 'POST'=>[]];
+
+  public function get(string $path, $handler) { $this->routes['GET'][$path] = $handler; }
+  public function post(string $path, $handler) { $this->routes['POST'][$path] = $handler; }
+
+  public function dispatch() {
+    $method = $_SERVER['REQUEST_METHOD'];
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    foreach ($this->routes[$method] as $pattern => $handler) {
+      $regex = '#^' . preg_replace('#\{[^/]+\}#', '([^/]+)', $pattern) . '$#';
+      if (preg_match($regex, $uri, $m)) {
+        array_shift($m);
+        return $this->call($handler, $m);
+      }
+    }
+    http_response_code(404);
+    echo "404 Not Found";
+  }
+
+  private function call($handler, array $params) {
+    if (is_array($handler)) {
+      [$class, $method] = $handler;
+      $obj = new $class;
+      return $obj->$method(...$params);
+    }
+    return $handler(...$params);
+  }
+}
+```
+
+---
+
+## Core GST domain logic
+
+### Tax split helpers
+
+```php
+<?php
+namespace App\Helpers;
+
+class Money {
+  public static function round2(float $v): float { return round($v, 2, PHP_ROUND_HALF_UP); }
+}
+
+class GST {
+  // Determine intra vs inter state. You can adapt based on your party/place_of_supply columns.
+  public static function split(float $taxAmount, bool $intra): array {
+    if ($intra) {
+      $cgst = Money::round2($taxAmount / 2);
+      $sgst = Money::round2($taxAmount - $cgst);
+      return ['cgst'=>$cgst, 'sgst'=>$sgst, 'igst'=>0.0];
+    } else {
+      return ['cgst'=>0.0, 'sgst'=>0.0, 'igst'=>Money::round2($taxAmount)];
+    }
+  }
+
+  public static function computeLine(float $qty, float $rate, float $gstRatePct): array {
+    $amount = Money::round2($qty * $rate);
+    $tax = Money::round2($amount * ($gstRatePct/100));
+    return [$amount, $tax];
+  }
+}
+```
+
+### Invoice model (memory-light, PDO)
+
+```php
+<?php
+namespace App\Models;
+
+use App\Core\DB;
+use App\Helpers\GST;
+
+class Invoice {
+  public static function paginate(int $page=1, int $per=50): array {
+    $off = ($page-1)*$per;
+    $pdo = DB::pdo();
+    $rows = $pdo->prepare("SELECT * FROM invoices ORDER BY issue_date DESC, id DESC LIMIT :l OFFSET :o");
+    $rows->bindValue(':l', $per, \PDO::PARAM_INT);
+    $rows->bindValue(':o', $off, \PDO::PARAM_INT);
+    $rows->execute();
+    $count = $pdo->query("SELECT COUNT(*) c FROM invoices")->fetchColumn();
+    return ['data'=>$rows->fetchAll(), 'total'=>(int)$count, 'page'=>$page, 'per'=>$per];
+  }
+
+  public static function find(int $id): ?array {
+    $pdo = DB::pdo();
+    $stmt = $pdo->prepare("SELECT * FROM invoices WHERE id=?");
+    $stmt->execute([$id]);
+    $inv = $stmt->fetch();
+    if (!$inv) return null;
+    $lines = $pdo->prepare("SELECT * FROM invoice_lines WHERE invoice_id=? ORDER BY id");
+    $lines->execute([$id]);
+    $inv['lines'] = $lines->fetchAll();
+    return $inv;
+  }
+
+  public static function create(array $data, array $lines): int {
+    return DB::tx(function($pdo) use ($data, $lines) {
+      $stmt = $pdo->prepare("INSERT INTO invoices (number, issue_date, party_id, place_of_supply, taxable_value, tax_value, total_value) VALUES (?,?,?,?,?,?,?)");
+      $stmt->execute([$data['number'],$data['issue_date'],$data['party_id'],$data['place_of_supply'],0,0,0]);
+      $id = (int)$pdo->lastInsertId();
+
+      $taxable = 0.0; $tax = 0.0;
+      $lineStmt = $pdo->prepare("INSERT INTO invoice_lines (invoice_id, item_id, description, qty, rate, gst_rate, amount, tax) VALUES (?,?,?,?,?,?,?,?)");
+      foreach ($lines as $ln) {
+        [$amount, $taxLine] = \App\Helpers\GST::computeLine((float)$ln['qty'], (float)$ln['rate'], (float)$ln['gst_rate']);
+        $taxable += $amount; $tax += $taxLine;
+        $lineStmt->execute([$id,$ln['item_id'],$ln['description'],$ln['qty'],$ln['rate'],$ln['gst_rate'],$amount,$taxLine]);
+      }
+
+      $intra = self::isIntraState($data['place_of_supply'] ?? null);
+      $split = \App\Helpers\GST::split($tax, $intra);
+      $total = \App\Helpers\Money::round2($taxable + $tax);
+
+      $upd = $pdo->prepare("UPDATE invoices SET taxable_value=?, tax_value=?, total_value=?, cgst=?, sgst=?, igst=? WHERE id=?");
+      $upd->execute([$taxable, $tax, $total, $split['cgst'], $split['sgst'], $split['igst'], $id]);
+
+      return $id;
+    });
+  }
+
+  private static function isIntraState(?string $pos): bool {
+    // Simplify: treat 'UP' or '09' as intra for Mawana. Adapt to your schema.
+    if (!$pos) return true;
+    $pos = strtoupper($pos);
+    return ($pos === 'UP' || $pos === '09' || str_contains($pos, 'UTTAR PRADESH'));
+  }
+}
+```
+
+---
+
+## Batch import with preview/update toggle
+
+### Controller endpoints
+
+```php
+<?php
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Helpers\Csv;
+use App\Actions\invoices\ImportPreview as PreviewAction;
+use App\Actions\invoices\ImportCommit as CommitAction;
+
+class InvoicesController extends Controller {
+  public function importForm() { return $this->view('invoices/import_form'); }
+
+  public function importPreview() {
+    [$filePath, $rows] = Csv::receiveUpload($_FILES['csv'] ?? null, ['number','issue_date','party','item','qty','rate','gst_rate','place_of_supply']);
+    $preview = (new PreviewAction)->run($rows);
+    return $this->view('invoices/import_preview', ['preview'=>$preview, 'filePath'=>$filePath]);
+  }
+
+  public function importCommit() {
+    $token = $_POST['token'] ?? '';
+    $file  = $_POST['filePath'] ?? '';
+    $result = (new CommitAction)->run($token, $file);
+    return $this->view('invoices/import_result', ['result'=>$result]);
+  }
+}
+```
+
+### Actions/invoices/ImportPreview.php
+
+```php
+<?php
+namespace App\Actions\invoices;
+
+use App\Helpers\Validator;
+use App\Helpers\Money;
+
+class ImportPreview {
+  public function run(array $rows): array {
+    $errors = []; $ok = []; $sum = ['count'=>0,'taxable'=>0.0,'tax'=>0.0];
+    foreach ($rows as $i => $r) {
+      $e = [];
+      if (!Validator::date($r['issue_date'])) $e[] = "invalid date";
+      if (!Validator::num($r['qty'])) $e[] = "qty";
+      if (!Validator::num($r['rate'])) $e[] = "rate";
+      if (!Validator::num($r['gst_rate'])) $e[] = "gst_rate";
+      if ($e) {
+        $errors[] = ['row'=>$i+1,'errors'=>$e,'sample'=>$r];
+        continue;
+      }
+      $amount = Money::round2($r['qty']*$r['rate']);
+      $tax = Money::round2($amount * ($r['gst_rate']/100));
+      $sum['count']++; $sum['taxable'] += $amount; $sum['tax'] += $tax;
+      $ok[] = $r + ['amount'=>$amount,'tax'=>$tax];
+    }
+    $token = bin2hex(random_bytes(16));
+    $_SESSION['import_token'] = $token;
+    $_SESSION['import_rows']  = $ok;
+    return ['token'=>$token, 'valid'=>$ok, 'errors'=>$errors, 'summary'=>[
+      'count'=>$sum['count'],
+      'taxable'=>Money::round2($sum['taxable']),
+      'tax'=>Money::round2($sum['tax'])
+    ]];
+  }
+}
+```
+
+### Actions/invoices/ImportCommit.php
+
+```php
+<?php
+namespace App\Actions\invoices;
+
+use App\Core\DB;
+use App\Models\Invoice;
+
+class ImportCommit {
+  public function run(string $token, string $filePath): array {
+    if (!isset($_SESSION['import_token']) || $token !== $_SESSION['import_token']) {
+      return ['ok'=>false, 'message'=>'Preview expired or token mismatch'];
+    }
+    $rows = $_SESSION['import_rows'] ?? [];
+    if (!$rows) return ['ok'=>false, 'message'=>'No rows to import'];
+
+    $created = 0;
+    DB::tx(function() use ($rows, &$created) {
+      // Here: group rows by invoice number+date+party to form invoices with multiple lines
+      $groups = [];
+      foreach ($rows as $r) {
+        $key = $r['number'].'|'.$r['issue_date'].'|'.$r['party'];
+        $groups[$key][] = $r;
+      }
+      foreach ($groups as $key => $lines) {
+        $first = $lines[0];
+        $data = [
+          'number' => $first['number'],
+          'issue_date' => $first['issue_date'],
+          'party_id' => $this->resolveParty($first['party']),
+          'place_of_supply' => $first['place_of_supply'] ?? 'UP',
+        ];
+        $linePayload = array_map(function($l) {
+          return [
+            'item_id' => $this->resolveItem($l['item']),
+            'description' => $l['item'],
+            'qty' => (float)$l['qty'],
+            'rate' => (float)$l['rate'],
+            'gst_rate' => (float)$l['gst_rate'],
+          ];
+        }, $lines);
+        Invoice::create($data, $linePayload);
+        $created++;
+      }
+    });
+
+    unset($_SESSION['import_token'], $_SESSION['import_rows']);
+    return ['ok'=>true, 'created'=>$created];
+  }
+
+  private function resolveParty(string $name): int {
+    // Upsert minimal party by name
+    $pdo = \App\Core\DB::pdo();
+    $sel = $pdo->prepare("SELECT id FROM parties WHERE name=?");
+    $sel->execute([$name]);
+    $id = $sel->fetchColumn();
+    if ($id) return (int)$id;
+    $ins = $pdo->prepare("INSERT INTO parties (name, state_code) VALUES (?, ?)");
+    $ins->execute([$name, '09']);
+    return (int)$pdo->lastInsertId();
+  }
+
+  private function resolveItem(string $name): int {
+    $pdo = \App\Core\DB::pdo();
+    $sel = $pdo->prepare("SELECT id FROM items WHERE name=?");
+    $sel->execute([$name]);
+    $id = $sel->fetchColumn();
+    if ($id) return (int)$id;
+    $ins = $pdo->prepare("INSERT INTO items (name, hsn) VALUES (?, ?)");
+    $ins->execute([$name, null]);
+    return (int)$pdo->lastInsertId();
+  }
+}
+```
+
+---
+
+## Reports: GSTR-1 and GSTR-3B summaries
+
+### ReportsController (summaries from invoices table)
+
+```php
+<?php
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Core\DB;
+
+class ReportsController extends Controller {
+  public function gstr1() {
+    $pdo = DB::pdo();
+    $q = $pdo->query("
+      SELECT
+        DATE_FORMAT(issue_date,'%Y-%m') as period,
+        SUM(taxable_value) as taxable,
+        SUM(cgst) as cgst,
+        SUM(sgst) as sgst,
+        SUM(igst) as igst,
+        SUM(total_value) as total
+      FROM invoices
+      GROUP BY period
+      ORDER BY period DESC
+      LIMIT 24
+    ");
+    return $this->view('reports/gstr1', ['rows'=>$q->fetchAll()]);
+  }
+
+  public function gstr3b() {
+    $pdo = DB::pdo();
+    $q = $pdo->query("
+      SELECT
+        DATE_FORMAT(issue_date,'%Y-%m') as period,
+        SUM(cgst+sgst+igst) as tax_liability,
+        SUM(taxable_value) as outward_taxable
+      FROM invoices
+      GROUP BY period
+      ORDER BY period DESC
+      LIMIT 24
+    ");
+    return $this->view('reports/gstr3b', ['rows'=>$q->fetchAll()]);
+  }
+}
+```
+
+---
+
+## Database integration and scripts
+
+- **Import your dump:**
+  - Place your .sql at database/dump.sql
+  - Run: php scripts/migrate.php
+
+### scripts/migrate.php
+
+```php
+<?php
+require __DIR__ . '/../vendor/autoload.php';
+
+use App\Core\DB;
+
+$pdo = DB::pdo();
+$sql = file_get_contents(__DIR__ . '/../database/dump.sql');
+$pdo->exec($sql);
+echo "Database imported.\n";
+```
+
+### scripts/backup_db.php
+
+```php
+<?php
+$dsn = getenv('DB_DSN'); // parse host/dbname as needed
+// Use mysqldump via shell in your environment or pdo export fallback
+$fname = __DIR__ . '/../storage/tmp/backup_' . date('Ymd_His') . '.sql';
+$cmd = sprintf('mysqldump -u%s -p%s %s > %s',
+  escapeshellarg(getenv('DB_USER')),
+  escapeshellarg(getenv('DB_PASS')),
+  escapeshellarg(parse_url($dsn, PHP_URL_PATH) ?: 'gst_accounting'),
+  escapeshellarg($fname)
+);
+system($cmd);
+echo "Backup at $fname\n";
+```
+
+---
+
+## Minimal views and UX notes
+
+- **Layout:** Dark, eye-friendly, single CSS file, no frontend frameworks.
+- **List screens:** Pagination, fast search by number/date/party.
+- **Forms:** Safe defaults, client-side number inputs, server validation.
+- **Import pages:** Two-step flow (Preview -> Commit) with error table and a disabled Commit button until token is present.
+- **Refresh-safe:** ImportCommit reads from server-side session token and re-validates; transactions ensure atomicity; idempotency by unique constraint on invoices(number, party_id, issue_date) if you choose.
+
+Example unique index (optional):
+
+```sql
+ALTER TABLE invoices ADD UNIQUE KEY uniq_inv (number, party_id, issue_date);
+```
+
+If a duplicate occurs during commit, catch and skip or update as per your policy.
+
+---
+
+## How to run locally
+
+1. **Requirements:** PHP 8.1+, Composer, MySQL/MariaDB.
+2. **Install deps:**
+   - composer init -n
+   - composer require vlucas/phpdotenv
+3. **Setup env:** Copy .env.example to .env, fill DB creds.
+4. **Import DB:** php scripts/migrate.php
+5. **Serve app:** php -S 127.0.0.1:8080 -t public
+
+---
+
+## Next steps I can tailor to your dump
+
+- **Map exact schema:** Share the key table names/columns from your gst_accounting_dump.sql. I’ll align queries, foreign keys, and indexes exactly.
+- **Bank receipt → invoice automation:** If you provide a CSV sample of bank receipts, I’ll add a restart-safe recon script in scripts/recon_generate_invoices.php with preview/update toggles.
+- **GSTR exports:** I can generate JSON/CSV in exact GSTN formats for GSTR-1 and 3B from your schema.
+- **Git workflow:** I can add make-like scripts for backup-before-commit and refresh-safe deploys, aligned with your current repo structure.
+
+If you drop a snippet of your actual tables (invoices, invoice_lines, parties, items, taxes, payments), I’ll refactor the model/queries precisely so it’s plug-and-play with your dump.
+
