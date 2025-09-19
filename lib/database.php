@@ -3,44 +3,26 @@
  * Database connection using credentials from con.php
  */
 
-// Read connection details from existing con.php file
+// Include configuration
 $con_file = __DIR__ . '/../con.php';
-if (!file_exists($con_file)) {
-    $con_file = __DIR__ . '/../config/con.php'; 
+if (file_exists($con_file)) {
+    require_once $con_file;
 }
 
-if (!file_exists($con_file)) {
-    die("Database configuration file not found");
+// Set default values if constants are not defined
+if (!defined('DB_HOST')) {
+    define('DB_HOST', '127.0.0.1');
+    define('DB_PORT', '3306');
+    define('DB_NAME', 'gst_accounting');
+    define('DB_USER', 'gstwork');
+    define('DB_PASS', 'gstwork@123');
 }
 
-$con_content = file_get_contents($con_file);
-
-// Extract database credentials using simple pattern matching
-$host = '127.0.0.1';
-$port = '3306';
-$dbname = 'gst_accounting';
-$username = 'gstwork';
-$password = 'gstwork@123';
-
-// Try to parse from config file if it's in a different format
-if (preg_match('/MYSQL_HOST=([^\s\n]+)/', $con_content, $matches)) {
-    $host = trim($matches[1]);
-}
-if (preg_match('/MYSQL_PORT=([^\s\n]+)/', $con_content, $matches)) {
-    $port = trim($matches[1]);
-}
-if (preg_match('/MYSQL_DB=([^\s\n]+)/', $con_content, $matches)) {
-    $dbname = trim($matches[1]);
-}
-if (preg_match('/MYSQL_USER=([^\s\n]+)/', $con_content, $matches)) {
-    $username = trim($matches[1]);
-}
-if (preg_match('/MYSQL_PASS=([^\s\n]+)/', $con_content, $matches)) {
-    $password = trim($matches[1]);
-}
+$db = null;
+$db_error = null;
 
 try {
-    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -48,13 +30,14 @@ try {
         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
     ];
     
-    $db = new PDO($dsn, $username, $password, $options);
+    $db = new PDO($dsn, DB_USER, DB_PASS, $options);
     
     // Set timezone to India
     $db->exec("SET time_zone = '+05:30'");
     
 } catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+    $db_error = $e->getMessage();
+    $db = null;
 }
 
 /**

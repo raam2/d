@@ -6,6 +6,13 @@
 
 require_once __DIR__ . '/../lib/database.php';
 
+// Check if we have a working database connection
+if (!isset($db) || !$db) {
+    // Show demo dashboard when database is not available
+    include __DIR__ . '/dashboard_demo.php';
+    return;
+}
+
 // Get basic statistics
 try {
     // Check if accounting tables exist
