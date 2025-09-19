@@ -26,7 +26,7 @@ $allowed = [
     'pl', 'balance_sheet', 'reconcile', 'post_invoices', 'settings',
     'contacts', 'sales_new', 'purchase_new', 'payment_new', 'receipt_new',
     'credit_note', 'debit_note', 'aging_ar', 'aging_ap', 'cashflow',
-    'invoice_list', 'invoice_view', 'party_list', 'migrate'
+    'invoice_list', 'invoice_view', 'party_list', 'migrate','run_schema_update'
 ];
 
 // Validate module
