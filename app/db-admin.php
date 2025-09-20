@@ -2,6 +2,47 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Basic security headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+// TODO: In production, set a strong Content-Security-Policy header
+// TODO: Consider adding HTTPS-only headers if using SSL
+
+// Start session for authentication
+session_start();
+
+// Basic password authentication
+// TODO: Replace with a robust, production-ready user authentication system
+// TODO: Use a secure password hash instead of plain text comparison
+$admin_password = 'admin123'; // Change this to a secure password in production
+
+// Check if user is authenticated
+if (!isset($_SESSION['db_admin_authenticated'])) {
+    // Handle login
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
+        if ($_POST['password'] === $admin_password) {
+            $_SESSION['db_admin_authenticated'] = true;
+            $query_string = $_SERVER['QUERY_STRING'] ?? '';
+            header('Location: ' . $_SERVER['PHP_SELF'] . ($query_string ? '?' . $query_string : ''));
+            exit;
+        } else {
+            $auth_error = 'Invalid password';
+        }
+    }
+    
+    // Show login form
+    render_login_form($auth_error ?? null);
+    exit;
+}
+
+// Handle logout
+if (isset($_GET['logout'])) {
+    session_destroy();
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 define('APP_ROOT', __DIR__);
 require_once APP_ROOT . '/config/database.php';
 
@@ -13,15 +54,27 @@ try {
     $conn = Database::getConnection();
     switch ($action) {
         case 'view_table':
-            if (!$db_name) throw new Exception("Database not specified.");
+            if (!$db_name) {
+                display_error_page("Database Not Specified", 
+                    "Please specify a database name in the URL to view tables. Example: ?db=gst_accounting");
+                exit;
+            }
             handle_html_view($conn, $db_name, $_GET['table']);
             break;
         case 'export':
-            if (!$db_name) throw new Exception("Database not specified.");
+            if (!$db_name) {
+                display_error_page("Database Not Specified", 
+                    "Please specify a database name in the URL to export data. Example: ?db=gst_accounting&action=export");
+                exit;
+            }
             handle_export($conn, $db_name, $_GET['tables'] ?? '', $_GET['format'] ?? 'csv');
             break;
         case 'get_distinct_values':
-            if (!$db_name) throw new Exception("Database not specified.");
+            if (!$db_name) {
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Database name not specified']);
+                exit;
+            }
             handle_get_distinct_values($conn, $db_name, $_GET['table'], $_GET['column']);
             break;
         case 'show_tables':
@@ -89,8 +142,23 @@ function handle_html_view($conn, $db_name, $table) {
 function show_table_list_page($conn, $db_name) {
     render_page_start("DB Admin");
 
+    // Add logout link
+    echo '<div style="text-align: right; margin-bottom: 20px;">';
+    echo '<a href="?logout=1" style="color: #f44336; text-decoration: none; padding: 5px 10px; border: 1px solid #f44336; border-radius: 4px;">Logout</a>';
+    echo '</div>';
+
     if (!$db_name) {
-        echo '<p class="usage-info">Please specify a database in the URL to see its tables. Example: <code>?db=gst_accounting</code></p>';
+        echo '<div style="max-width: 600px; margin: 50px auto; padding: 20px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">';
+        echo '<h3>🔍 Database Selection Required</h3>';
+        echo '<p>To access the database administration panel, please specify a database name in the URL.</p>';
+        echo '<p><strong>Example:</strong> <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">?db=gst_accounting</code></p>';
+        echo '<p>This will show you all tables in the specified database and allow you to:</p>';
+        echo '<ul style="margin: 10px 0 10px 20px;">';
+        echo '<li>View table contents with filtering capabilities</li>';
+        echo '<li>Export data as CSV or SQL format</li>';
+        echo '<li>Perform bulk operations on multiple tables</li>';
+        echo '</ul>';
+        echo '</div>';
         render_page_end();
         return;
     }
@@ -132,11 +200,24 @@ function show_table_list_page($conn, $db_name) {
 
 /**
  * API ACTION: Gets distinct values for a column to populate filters.
+ * Fixed SQL injection vulnerability by validating column names against table schema.
  */
 function handle_get_distinct_values($conn, $db_name, $table, $column) {
-    if (!is_valid_table_name($table) || !is_valid_table_name($column)) {
-        throw new Exception("Invalid table or column name.");
+    if (!is_valid_table_name($table)) {
+        throw new Exception("Invalid table name.");
     }
+    
+    // Get actual column names from the table to prevent SQL injection
+    $stmt = $conn->prepare("SHOW COLUMNS FROM `{$table}`");
+    $stmt->execute();
+    $valid_columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    
+    // Validate that the requested column exists in the table
+    if (!in_array($column, $valid_columns)) {
+        throw new Exception("Invalid column name. Column does not exist in table.");
+    }
+    
+    // Now safe to use the column name in the query since it's validated
     $stmt = $conn->prepare("SELECT DISTINCT `{$column}` FROM `{$table}` ORDER BY `{$column}` ASC");
     $stmt->execute();
     $results = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -200,6 +281,32 @@ function handle_export($conn, $db_name, $tables_str, $format) {
 }
 
 // --- HTML & Utility Functions ---
+
+function render_login_form($error = null) {
+    render_page_start("Database Admin - Login");
+    echo '<div style="max-width: 400px; margin: 100px auto; padding: 20px; background: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+    echo '<h2 style="text-align: center; margin-bottom: 20px;">Database Administration Login</h2>';
+    
+    if ($error) {
+        echo '<div style="background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #f44336;">';
+        echo htmlspecialchars($error);
+        echo '</div>';
+    }
+    
+    echo '<form method="POST" style="display: flex; flex-direction: column; gap: 15px;">';
+    echo '<label for="password" style="font-weight: bold;">Admin Password:</label>';
+    echo '<input type="password" id="password" name="password" required style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">';
+    echo '<button type="submit" style="background: #4CAF50; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Login</button>';
+    echo '</form>';
+    
+    echo '<div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">';
+    echo '<strong>Security Notice:</strong> This is a basic authentication system. ';
+    echo 'For production use, implement proper user management with secure password hashing.';
+    echo '</div>';
+    
+    echo '</div>';
+    render_page_end();
+}
 
 function is_valid_table_name($name) { return preg_match('/^[a-zA-Z0-9_]+$/', $name); }
 
