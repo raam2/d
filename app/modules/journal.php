@@ -83,9 +83,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'view' && isset($_GET['id'])) 
 <script>
 // Pass accounts to JavaScript
 window.accounts = <?= json_encode($accounts) ?>;
-window.accountOptions = <?= json_encode(array_map(function($acc) {
+window.accountOptions = '<?= implode('', array_map(function($acc) {
     return '<option value="' . $acc['code'] . '">' . $acc['code'] . ' - ' . htmlspecialchars($acc['name']) . '</option>';
-}, $accounts)) ?>;
+}, $accounts)) ?>';
 </script>
 
 <div class="page-header">
