@@ -1,0 +1,170 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background-color: #f0f2f5;
+    color: #1c1e21;
+}
+
+.container {
+    max-width: 1200px; /* Increased width for wider tables */
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+h1 strong, h2 strong {
+    color: #007bff;
+}
+
+.usage-info, .error {
+    background-color: #fffbe6;
+    border: 1px solid #ffe58f;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+.error {
+    background-color: #fff1f0;
+    border-color: #ffccc7;
+    color: #d93026;
+}
+code {
+    background-color: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 600;
+}
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Section for global actions */
+.global-actions {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+/* Table List Styling */
+.table-list {
+    list-style: none;
+    padding: 0;
+}
+.table-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    font-size: 1.1em;
+}
+.table-list li:last-child {
+    border-bottom: none;
+}
+.table-list li span {
+    font-weight: 500;
+}
+.action-link {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 10px;
+    transition: all 0.2s ease-in-out;
+    border: 1px solid transparent;
+}
+.action-link.view {
+    background-color: #007bff;
+    color: white;
+}
+.action-link.view:hover {
+    background-color: #0056b3;
+}
+.action-link.dump-csv {
+    background-color: #28a745;
+    color: white;
+}
+.action-link.dump-csv:hover {
+    background-color: #1e7e34;
+}
+.action-link.dump-sql {
+    background-color: #ffc107;
+    color: #212529;
+    border-color: #d39e00;
+}
+.action-link.dump-sql:hover {
+    background-color: #e0a800;
+}
+
+
+/* --- THIS IS THE FIX FOR WIDE TABLE SCROLLING --- */
+.table-wrapper {
+    overflow-x: auto; /* This enables horizontal scrolling on the container */
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+    white-space: nowrap; /* Prevents text from wrapping, forcing the scroll */
+}
+thead tr {
+    background-color: #343a40;
+    color: #fff;
+    position: sticky; /* Makes headers stick to the top during vertical scroll */
+    top: 0;
+}
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+/* Styling for the new filter row in the table header */
+thead tr.filters-row th {
+    padding: 8px;
+    background-color: #e9ecef;
+}
+
+/* Tom Select filter styling */
+.filters-row .ts-control {
+    background-color: #fff !important;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 6px 12px !important;
+    font-size: 14px;
+}
+.filters-row .ts-control .ts-input {
+    font-size: 14px;
+}
+.filters-row .ts-dropdown {
+    font-size: 14px;
+}

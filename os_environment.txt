@@ -1,0 +1,7 @@
+i want php based accounting application . usable offline . simple readable dark UI . vanilla js . no external library . not using heavy css -load on memory . Memory useful for large dataset operations . lxc list 
+lxc exec boss10-test -- bash
+// boss10 -a debian os . 
+Database & Web Stack install किया (Apache + PHP + MySQL/MariaDB)：
+Container is dedicated to serve as server ( both DATABASE AND as PDO ) .
+
+mysql -u gstwork -p'gstwork@123' -h 127.0.0.1 -P 3306 -D gst_accounting 
