@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>API Test</title>
+<style>
+body{font-family:system-ui;margin:1rem;background:#111;color:#eee;}
+label{display:block;margin:.5rem 0;}
+textarea,input,select{width:100%;max-width:800px;background:#1d1d1d;color:#eee;border:1px solid #333;padding:.5rem;}
+button{padding:.55rem 1.1rem;background:#2d7cc6;color:#fff;border:none;cursor:pointer;margin-top:.5rem;}
+pre{background:#1d1d1d;padding:.75rem;max-width:900px;overflow:auto;}
+</style>
+</head>
+<body>
+<h1>Accounting API Test</h1>
+<form id="f">
+  <label>Action
+    <input name="action" value="trial_balance">
+  </label>
+  <label>Method
+    <select name="method">
+      <option>GET</option>
+      <option>POST</option>
+    </select>
+  </label>
+  <label>Query Params (e.g. from=2025-04-01&to=2025-04-30)
+    <input name="query">
+  </label>
+  <label>JSON Body (POST only)
+    <textarea name="body" rows="6">{}</textarea>
+  </label>
+  <button>Send</button>
+</form>
+<pre id="out"></pre>
+<script>
+document.getElementById('f').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  const action=fd.get('action');
+  const method=fd.get('method');
+  const query=fd.get('query')||'';
+  let url='router.php?action='+encodeURIComponent(action);
+  if(query.trim()) url+='&'+query.trim();
+  const opt={method};
+  if(method==='POST'){
+    opt.headers={'Content-Type':'application/json'};
+    opt.body=fd.get('body')||'{}';
+  }
+  const r=await fetch(url,opt);
+  const t=await r.text();
+  document.getElementById('out').textContent=t;
+});
+</script>
+</body>
+</html>
