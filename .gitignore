@@ -20,3 +20,5 @@ Thumbs.db
 
 # Environment-specific config (if needed in future)
 # config.local.php
+*.backup
+*_fixed*.sql
