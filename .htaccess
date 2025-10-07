@@ -1,0 +1,27 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Redirect to index.php for clean URLs (optional)
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.*)$ index.php?page=$1 [QSA,L]
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Prevent directory browsing
+Options -Indexes
+
+# Block access to sensitive files
+<FilesMatch "^(config\.php|db\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Allow access to index.php
+<FilesMatch "^index\.php$">
+    Require all granted
+</FilesMatch>
