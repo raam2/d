@@ -7,14 +7,14 @@ d/
 │   ├── config.php               ⭐ Database configuration (1.1 KB)
 │   ├── db.php                   ⭐ Database helpers (1.1 KB)
 │   ├── diagnostic.php           🔧 Troubleshooting tool (5.9 KB)
-│   └── .htaccess                ⚙️  Apache configuration (341 B)
+│   └── .htaccess                ⚙️ Apache configuration (341 B)
 │
 ├── 📚 DOCUMENTATION FILES (For Reference)
 │   ├── README.md                📖 Complete application guide (4.8 KB)
 │   ├── DEPLOYMENT.md            🚀 Step-by-step deployment (3.3 KB)
 │   ├── IMPLEMENTATION_SUMMARY.md 📋 Implementation overview (7.2 KB)
 │   ├── QUICK_REFERENCE.md       🎯 Quick reference card (3.9 KB)
-│   ├── FILE_STRUCTURE.md        📂 This file
+│   ├── FILE_STRUCTURE.md        📂 Repository structure guide
 │   ├── app_build.md             🏗️  Architecture documentation (3.8 KB)
 │   └── plan_implementation.md   📝 Implementation plan (22.9 KB)
 │
@@ -127,13 +127,16 @@ app_components       ← Forms, lists, actions
 ## Total Size
 
 ```
-Application files:    ~17 KB
+Required files:       10.8 KB  (main_entry.php + config.php + db.php)
+Recommended files:    16.7 KB  (required + diagnostic.php)
+All application:      ~17 KB   (with .htaccess)
 Documentation:        ~50 KB
 Database schema:      1.2 MB
 Total repository:     ~1.3 MB
 ```
 
 **Minimal footprint:** Only 3 required PHP files totaling 10.8 KB!
+**With diagnostics:** 4 files totaling 16.7 KB
 
 ## Quick Access
 
