@@ -2,6 +2,23 @@
 
 This repository stores the full database schema and configuration for the Jayanti Enterprises accounting workspace. All application pages, components, styles, and sample data are persisted inside the SQL dump so deployments stay lightweight and offline-ready.
 
+## 🆕 Database Normalization (Latest Update)
+
+**NEW**: Comprehensive database normalization addressing HSN codes, product name variants, and denormalized staging tables.
+
+### Quick Links
+- 📘 **[Quick Reference](QUICK_REFERENCE.md)** - 1-minute deploy guide
+- 📚 **[Full Guide](NORMALIZATION_GUIDE.md)** - Complete documentation
+- 🧪 **[Testing Guide](TESTING_GUIDE.md)** - Test before deploying
+- 🏗️ **[Architecture](ARCHITECTURE.md)** - Design diagrams
+
+### What's Fixed
+- ✅ **Multiple Product Names** → `item_name_variants` table maps Hindi/English/alias names
+- ✅ **Missing HSN Codes** → Auto-populated from staging tables (0% → 60-80% coverage)
+- ✅ **Denormalized Tables** → Proper 3NF structure for purchase invoices
+- ✅ **No Search by Variants** → Fast lookup by any product name
+- ✅ **No Data Quality Monitoring** → New diagnostics dashboard
+
 ## Getting started
 
 1. Provision a MariaDB or MySQL 8+ database.
