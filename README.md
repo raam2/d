@@ -40,8 +40,41 @@ php -S 0.0.0.0:8080 main_entry.php
   - Existing accounting schema (parties, items, invoices, invoice_items, GST configuration, etc.).
 - `app_build.md` and `plan_implementation.md` describe the architecture and implementation blueprint.
 
+## Database Normalization
+
+The repository now includes comprehensive database normalization to address:
+
+1. **Multiple Product Names**: Created `item_name_variants` table to map Hindi/English/alias names to canonical items
+2. **Missing HSN Codes**: Automated migration to populate HSN codes from staging tables
+3. **Denormalized Staging Tables**: Created proper normalized `purchase_invoice_header` and `purchase_invoice_line_items` tables
+
+See [NORMALIZATION_GUIDE.md](NORMALIZATION_GUIDE.md) for detailed documentation.
+
+### Quick Start
+
+```bash
+# 1. Backup your database first!
+mysqldump -h HOST -u USER -p DATABASE > backup.sql
+
+# 2. Run normalization (automated)
+./deploy_normalization.sh production
+
+# 3. Or run manually
+mysql -h HOST -u USER -p DATABASE < database_normalization.sql
+mysql -h HOST -u USER -p DATABASE < metadata_update.sql
+```
+
+### New Features
+
+- **Item Variants Management**: Access at `?p=item_variants` to manage multiple product names
+- **Normalized Purchase Invoices**: View at `?p=purchase_invoices` for clean invoice data
+- **Data Quality Diagnostics**: Check at `?p=data_diagnostics` for HSN coverage and migration status
+- **Search by Any Name**: Find items using Hindi names, English names, or aliases
+- **Automated HSN Updates**: Bulk update items with HSN codes from staging data
+
 ## Next steps
 
 - Extend metadata by inserting new rows into `app_pages` / `app_components` instead of creating filesystem templates.
 - Keep SQL changes idempotent (`INSERT ... ON DUPLICATE KEY UPDATE`) when seeding metadata so repeated imports do not duplicate rows.
 - Run `php -l main_entry.php` after PHP changes and re-import the SQL to validate schema updates.
+- After normalization, archive old staging tables once data is verified.
