@@ -50,18 +50,33 @@ The script uses upserts so component definitions are updated without touching yo
 
 ## Zoho Books Integration
 
-This repository includes a complete export utility for migrating data to Zoho Books:
+This repository includes a complete export utility for migrating data to Zoho Books.
 
-### Quick Export
+### 🚀 Quick Start
+
+**👉 New to Zoho Books migration? Start here: [START_HERE.md](START_HERE.md)**
 
 ```bash
-# Export all data at once
+# 1. Configure (one time)
+cp .env.example .env
+# Edit .env with your credentials
+
+# 2. Export all data
+source .env
 php zoho_export.php all
 
-# Or use the web interface
-php -S 0.0.0.0:8080
-# Then visit: http://localhost:8080/zoho_export.php
+# 3. Import to Zoho Books
+# Visit https://books.zoho.in/app
+# Settings → Import Data
 ```
+
+### 📚 Documentation
+
+- **[START_HERE.md](START_HERE.md)** - Begin here! Quick start guide
+- **[ZOHO_QUICK_REFERENCE.md](ZOHO_QUICK_REFERENCE.md)** - Command reference
+- **[ZOHO_IMPORT_GUIDE.md](ZOHO_IMPORT_GUIDE.md)** - Complete 10+ page guide
+- **[zoho_migration_guide.html](zoho_migration_guide.html)** - Visual guide
+- **[SECURITY.md](SECURITY.md)** - Security best practices
 
 ### What Gets Exported
 
@@ -70,18 +85,12 @@ php -S 0.0.0.0:8080
 - **Invoices:** Sales and purchase invoices with line items
 - **GST Data:** Tax calculations and compliance information
 
-### Import to Zoho Books
+### Files
 
-1. Visit https://books.zoho.in/app and log in
-2. Go to **Settings → Import Data**
-3. Import in order: Contacts → Items → Invoices
-4. See [ZOHO_IMPORT_GUIDE.md](ZOHO_IMPORT_GUIDE.md) for detailed instructions
-
-Files:
 - `zoho_export.php` - Export utility (web + CLI)
-- `ZOHO_EXPORT_README.md` - Quick reference
-- `ZOHO_IMPORT_GUIDE.md` - Complete step-by-step guide
+- `test_exports.sh` - Test suite
 - `zoho_export_components.sql` - Database integration (optional)
+- `.env.example` - Environment template
 
 ## Next steps
 
