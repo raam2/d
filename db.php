@@ -1,4 +1,4 @@
-<?php
+<?php // db.php
 require __DIR__ . '/config.php';
 
 /**
