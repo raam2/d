@@ -1,9 +1,14 @@
 <?php
-ini_set('display_errors', '1');
-error_reporting(E_ALL);
 declare(strict_types=1);
 
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+
 require __DIR__ . '/db.php';
+
+// -----------------------------------------------------------------------------
+// Helper functions
+// -----------------------------------------------------------------------------
 
 function h(string $value): string
 {
@@ -81,7 +86,7 @@ function renderForm(array $component, array $meta, array $oldInput = []): string
         $label = $field['label'] ?? ucfirst(str_replace('_', ' ', $name));
         $type = $field['type'] ?? 'text';
         $default = $field['default'] ?? '';
-        $value = $oldInput[$name] ?? $_POST[$name] ?? $default;
+        $value = $oldInput[$name] ?? ($_POST[$name] ?? $default);
         $required = !empty($field['required']) ? ' required' : '';
         $placeholder = isset($field['placeholder']) ? ' placeholder="' . h($field['placeholder']) . '"' : '';
         $maxlength = isset($field['maxlength']) ? ' maxlength="' . (int)$field['maxlength'] . '"' : '';
@@ -133,6 +138,10 @@ function renderAction(array $component, array $meta): string
 
     return $html;
 }
+
+// -----------------------------------------------------------------------------
+// Request handling
+// -----------------------------------------------------------------------------
 
 $pageSlug = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? ($_POST['__page'] ?? ($_GET['p'] ?? 'dashboard'))

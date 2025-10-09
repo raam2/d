@@ -32,6 +32,14 @@ php -S 0.0.0.0:8080 main_entry.php
 
   Visiting `http://localhost:8080/?p=dashboard` should now render the metadata-driven UI.
 
+4. If the database already holds live records, run the lightweight `metadata_patch.sql` instead of the full dump to refresh only the UI metadata:
+
+```bash
+mysql --host=$DB_HOST --port=$DB_PORT --user=$DB_USER --password=$DB_PASS $DB_NAME < metadata_patch.sql
+```
+
+The script uses upserts so component definitions are updated without touching your transactional tables.
+
 ## Repository alignment
 
 - `.github/copilot-coding-agent.yml` codifies the Copilot coding agent workflow (single entry point, dark theme, no external assets).

@@ -1,5 +1,11 @@
 <?php // db.php
-require __DIR__ . '/config.php';
+
+$configPath = rtrim(__DIR__, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'config.php';
+if (!is_file($configPath)) {
+    throw new RuntimeException(sprintf('Configuration file missing at expected path: %s', $configPath));
+}
+
+require $configPath;
 
 /**
  * Shared PDO connection accessor.
