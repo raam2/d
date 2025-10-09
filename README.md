@@ -50,18 +50,29 @@ $ENV = 'production';  // Force production mode
 
 ### 4. Test Database Connection
 
-Before using the app, verify the connection:
+Before using the app, verify the connection works:
 
+**Quick Test:**
 ```
 http://localhost:8080/test_connection.php
 https://vedanthomestay.co.in/app/test_connection.php
 ```
 
-This will show:
+**Full Diagnostics:**
+```
+http://localhost:8080/diagnostics.php
+https://vedanthomestay.co.in/app/diagnostics.php
+```
+
+The diagnostics tool will show:
+- ✓ PHP version and extensions
 - ✓ Database connection status
 - ✓ Available pages (dashboard, parties, items, invoices)
 - ✓ Component count per page
 - ✓ Critical tables verification
+- ✓ Page rendering simulation
+
+If all checks pass, you're ready to use the application.
 
 ### 5. Access the Application
 
@@ -106,11 +117,16 @@ Configured in `config.php`:
 
 ### Blank Page / No Response
 
-1. Run `test_connection.php` first to verify database connectivity
-2. Check that `APP_ENV` is set correctly (local or production)
-3. Verify credentials in `config.php` match your database
-4. Check PHP error logs for details
-5. Ensure all tables exist (particularly `app_pages` and `app_components`)
+1. **Run diagnostics first:** `http://your-server/diagnostics.php`
+   - This will show exactly what's failing
+   - Check all sections for red X marks
+   - Follow the recommended actions at the bottom
+
+2. Run `test_connection.php` to verify database connectivity
+3. Check that `APP_ENV` is set correctly (local or production)
+4. Verify credentials in `config.php` match your database
+5. Check PHP error logs for details
+6. Ensure all tables exist (particularly `app_pages` and `app_components`)
 
 ### Database Connection Failed
 
