@@ -1,4 +1,0 @@
-- But main problem is that database design is wrong . THIS REQUIRES IMPROVEMENT AS HERE TABLE `purchase_invoice_staging` AND `purchase_invoice_staging_reverse` AND `items` AND `stg_purchase_invoice_hindi` IS INCOMPLETE FOR NORMALIZATION . 
-
--THERE IS PROBLEM OF ONE PRODUCT REFERED BY MULTIPLE NAMES SO THESE ARE TO BE RECORDED IS SEPERATE TABLE MAPPED TO TRANSACTIONS . 
-`HSN` CODES TO BE UPADATED IN `ITEMS` TABLE FROM `stg_purchase_invoice_hindi` AND PROPER NORMALIZATION NEEDIN ENTIRE DATABASE .
