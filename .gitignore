@@ -1,0 +1,23 @@
+# Export files
+/exports/*.csv
+/exports/*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+error.log
+debug.log
