@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 07, 2025 at 03:59 PM
+-- Generation Time: Oct 09, 2025 at 05:40 AM
 -- Server version: 11.8.3-MariaDB-log
 -- PHP Version: 7.2.34
 
@@ -20,132 +20,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `u184420243_jayanti_enter4`
 --
-
-DELIMITER $$
---
--- Procedures
---
-CREATE DEFINER=`u184420243_gst4`@`%` PROCEDURE `export_portable` (IN `db_name` VARCHAR(64))   BEGIN
-  DECLARE done INT DEFAULT 0;
-  DECLARE t VARCHAR(64);
-
-  DECLARE cur CURSOR FOR
-    SELECT table_name
-    FROM information_schema.tables
-    WHERE table_schema = db_name
-      AND table_type = 'BASE TABLE';
-
-  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-  OPEN cur;
-  read_loop: LOOP
-    FETCH cur INTO t;
-    IF done THEN
-      LEAVE read_loop;
-    END IF;
-
-    
-    SET @cols_ident := NULL;
-    SELECT GROUP_CONCAT(CONCAT('`', column_name, '`') ORDER BY ordinal_position)
-      INTO @cols_ident
-    FROM information_schema.columns
-    WHERE table_schema = db_name
-      AND table_name = t
-      AND EXTRA NOT LIKE '%GENERATED%';
-
-    
-    SET @vals_args := NULL;
-    SELECT GROUP_CONCAT(
-             CASE
-               WHEN data_type IN ('int','bigint','smallint','mediumint','tinyint',
-                                  'decimal','numeric','float','double','real')
-                 THEN CONCAT('IF(`', column_name, '` IS NULL, ''NULL'', CAST(`', column_name, '` AS CHAR))')
-               WHEN data_type IN ('date')
-                 THEN CONCAT('IF(`', column_name, "` IS NULL OR `", column_name, "`='0000-00-00','NULL',QUOTE(`", column_name, '`))')
-               ELSE
-                 CONCAT('IF(`', column_name, '` IS NULL, ''NULL'', REPLACE(QUOTE(`', column_name, '`), ''\\\\'', ''\\\\\\\\''))')
-             END
-             ORDER BY ordinal_position SEPARATOR ', ')
-      INTO @vals_args
-    FROM information_schema.columns
-    WHERE table_schema = db_name
-      AND table_name = t
-      AND EXTRA NOT LIKE '%GENERATED%';
-
-    
-    SET @sql = CONCAT(
-      'SELECT CONCAT(''INSERT INTO `', t, '` (', @cols_ident, ') VALUES ('', ',
-      'CONCAT_WS('', '', ', @vals_args, '), ',
-      ''');'') FROM `', t, '`'
-    );
-
-    PREPARE stmt FROM @sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-
-  END LOOP;
-
-  CLOSE cur;
-END$$
-
-CREATE DEFINER=`u184420243_gst4`@`%` PROCEDURE `GetHierarchyPath` (IN `record_id` INT)   BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE current_id INT DEFAULT record_id;
-    DECLARE current_title VARCHAR(255);
-    DECLARE current_parent INT;
-    
-    
-    CREATE TEMPORARY TABLE IF NOT EXISTS temp_path (
-        level_order INT AUTO_INCREMENT PRIMARY KEY,
-        id INT,
-        title VARCHAR(255),
-        parent_id INT
-    );
-    
-    
-    DELETE FROM temp_path;
-    
-    
-    path_loop: LOOP
-        SELECT id, title, parent_id INTO current_id, current_title, current_parent
-        FROM hierarchical_records 
-        WHERE id = current_id;
-        
-        IF current_id IS NULL THEN
-            LEAVE path_loop;
-        END IF;
-        
-        INSERT INTO temp_path (id, title, parent_id) VALUES (current_id, current_title, current_parent);
-        
-        IF current_parent = 0 OR current_parent IS NULL THEN
-            LEAVE path_loop;
-        END IF;
-        
-        SET current_id = current_parent;
-    END LOOP;
-    
-    
-    SELECT id, title, parent_id, level_order 
-    FROM temp_path 
-    ORDER BY level_order DESC;
-    
-    DROP TEMPORARY TABLE temp_path;
-END$$
-
---
--- Functions
---
-CREATE DEFINER=`u184420243_gst4`@`%` FUNCTION `HasChildren` (`record_id` INT) RETURNS TINYINT(1) DETERMINISTIC READS SQL DATA BEGIN
-    DECLARE child_count INT DEFAULT 0;
-    
-    SELECT COUNT(*) INTO child_count 
-    FROM hierarchical_records 
-    WHERE parent_id = record_id AND status = 'active';
-    
-    RETURN child_count > 0;
-END$$
-
-DELIMITER ;
+CREATE DATABASE IF NOT EXISTS `u184420243_jayanti_enter4` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `u184420243_jayanti_enter4`;
 
 -- --------------------------------------------------------
 
@@ -217,6 +93,65 @@ INSERT INTO `accounts` (`id`, `code`, `name`, `account_type`, `parent_code`, `is
 (45, '6700', 'Depreciation', 'EXPENSE', '6000', 1, 'Asset depreciation', '2025-09-19 07:27:00', '2025-09-19 07:27:00'),
 (46, '6800', 'Bank Charges', 'EXPENSE', '6000', 1, 'Bank fees and charges', '2025-09-19 07:27:00', '2025-09-19 07:27:00'),
 (47, '6900', 'Miscellaneous Expenses', 'EXPENSE', '6000', 1, 'Other expenses', '2025-09-19 07:27:00', '2025-09-19 07:27:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `app_components`
+--
+
+CREATE TABLE `app_components` (
+  `id` int(11) NOT NULL,
+  `page_slug` varchar(100) NOT NULL,
+  `comp_type` enum('list','form','action') NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `sql_text` mediumtext NOT NULL,
+  `meta_json` mediumtext NOT NULL,
+  `ord` int(11) DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `app_components`
+--
+
+INSERT INTO `app_components` (`id`, `page_slug`, `comp_type`, `name`, `sql_text`, `meta_json`, `ord`, `created_at`, `updated_at`) VALUES
+(1, 'dashboard', 'list', 'dashboard_summary', 'SELECT party_type AS label, COUNT(*) AS total FROM parties GROUP BY party_type ORDER BY party_type', '{\"slot\":\"summary\",\"layout\":\"stat\",\"columns\":[{\"label\":\"Type\",\"field\":\"label\"},{\"label\":\"Total\",\"field\":\"total\"}],\"emptyText\":\"No parties captured yet.\"}', 1, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(2, 'dashboard', 'list', 'recent_activity', 'SELECT DATE_FORMAT(created_at, \"%Y-%m-%d %H:%i\") AS occurred_at, level, message FROM diagnostics ORDER BY created_at DESC LIMIT 10', '{\"slot\":\"activity\",\"layout\":\"table\",\"columns\":[{\"label\":\"When\",\"field\":\"occurred_at\"},{\"label\":\"Level\",\"field\":\"level\"},{\"label\":\"Message\",\"field\":\"message\"}],\"emptyText\":\"No activity recorded.\"}', 2, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(3, 'parties', 'list', 'party_list', 'SELECT id, name, gstin, party_type, city, state, email, phone, DATE_FORMAT(created_at, \"%Y-%m-%d\") AS created_on FROM parties ORDER BY created_at DESC LIMIT 200', '{\"slot\":\"list\",\"layout\":\"table\",\"columns\":[{\"label\":\"Name\",\"field\":\"name\"},{\"label\":\"GSTIN\",\"field\":\"gstin\"},{\"label\":\"Type\",\"field\":\"party_type\"},{\"label\":\"City\",\"field\":\"city\"},{\"label\":\"State\",\"field\":\"state\"},{\"label\":\"Email\",\"field\":\"email\"},{\"label\":\"Phone\",\"field\":\"phone\"},{\"label\":\"Created\",\"field\":\"created_on\"}],\"actions\":[{\"label\":\"Edit\",\"type\":\"link\",\"href\":\"?p=parties&edit={{id}}\"}]}', 1, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(4, 'parties', 'form', 'party_form', 'INSERT INTO parties (name, gstin, party_type, city, state, email, phone) VALUES (:name, :gstin, :party_type, :city, :state, :email, :phone)', '{\"slot\":\"form\",\"method\":\"POST\",\"success\":\"Party saved successfully.\",\"fields\":[{\"name\":\"name\",\"label\":\"Party Name\",\"type\":\"text\",\"required\":true},{\"name\":\"gstin\",\"label\":\"GSTIN\",\"type\":\"text\",\"pattern\":\"^[0-9A-Z]{15}$\",\"placeholder\":\"Optional\"},{\"name\":\"party_type\",\"label\":\"Type\",\"type\":\"select\",\"options\":[{\"label\":\"Customer\",\"value\":\"customer\"},{\"label\":\"Supplier\",\"value\":\"supplier\"},{\"label\":\"Both\",\"value\":\"both\"}],\"default\":\"customer\"},{\"name\":\"city\",\"label\":\"City\",\"type\":\"text\"},{\"name\":\"state\",\"label\":\"State\",\"type\":\"text\",\"default\":\"Uttarakhand\"},{\"name\":\"email\",\"label\":\"Email\",\"type\":\"email\"},{\"name\":\"phone\",\"label\":\"Phone\",\"type\":\"text\"}]}', 2, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(5, 'items', 'list', 'item_list', 'SELECT id, name, hsn_code, unit, default_rate, cgst_rate, sgst_rate, igst_rate, DATE_FORMAT(created_at, \"%Y-%m-%d\") AS created_on FROM items ORDER BY created_at DESC LIMIT 200', '{\"slot\":\"list\",\"layout\":\"table\",\"columns\":[{\"label\":\"Name\",\"field\":\"name\"},{\"label\":\"HSN\",\"field\":\"hsn_code\"},{\"label\":\"Unit\",\"field\":\"unit\"},{\"label\":\"Rate\",\"field\":\"default_rate\"},{\"label\":\"CGST\",\"field\":\"cgst_rate\"},{\"label\":\"SGST\",\"field\":\"sgst_rate\"},{\"label\":\"IGST\",\"field\":\"igst_rate\"},{\"label\":\"Created\",\"field\":\"created_on\"}],\"emptyText\":\"No items defined.\"}', 1, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(6, 'items', 'form', 'item_form', 'INSERT INTO items (name, hsn_code, unit, default_rate, cgst_rate, sgst_rate, igst_rate) VALUES (:name, :hsn_code, :unit, :default_rate, :cgst_rate, :sgst_rate, :igst_rate)', '{\"slot\":\"form\",\"method\":\"POST\",\"success\":\"Item saved successfully.\",\"fields\":[{\"name\":\"name\",\"label\":\"Item Name\",\"type\":\"text\",\"required\":true},{\"name\":\"hsn_code\",\"label\":\"HSN\",\"type\":\"text\",\"required\":true,\"maxlength\":8},{\"name\":\"unit\",\"label\":\"Unit\",\"type\":\"text\",\"default\":\"PCS\"},{\"name\":\"default_rate\",\"label\":\"Default Rate\",\"type\":\"number\",\"step\":\"0.01\"},{\"name\":\"cgst_rate\",\"label\":\"CGST %\",\"type\":\"number\",\"step\":\"0.01\"},{\"name\":\"sgst_rate\",\"label\":\"SGST %\",\"type\":\"number\",\"step\":\"0.01\"},{\"name\":\"igst_rate\",\"label\":\"IGST %\",\"type\":\"number\",\"step\":\"0.01\"}]}', 2, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(7, 'invoices', 'list', 'invoice_list', 'SELECT invoice_no, invoice_date, inv_type, status, place_of_supply, reverse_charge, itc_eligible FROM invoices ORDER BY invoice_date DESC, id DESC LIMIT 200', '{\"slot\":\"list\",\"layout\":\"table\",\"columns\":[{\"label\":\"Invoice No\",\"field\":\"invoice_no\"},{\"label\":\"Date\",\"field\":\"invoice_date\"},{\"label\":\"Type\",\"field\":\"inv_type\"},{\"label\":\"Status\",\"field\":\"status\"},{\"label\":\"Place of Supply\",\"field\":\"place_of_supply\"},{\"label\":\"Reverse Charge\",\"field\":\"reverse_charge\",\"format\":\"boolean\"},{\"label\":\"ITC Eligible\",\"field\":\"itc_eligible\",\"format\":\"boolean\"}],\"emptyText\":\"No invoices posted.\"}', 1, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(8, 'invoices', 'list', 'invoice_line_items', 'SELECT i.invoice_no, ii.description, ii.quantity, ii.rate, ii.cgst_rate, ii.sgst_rate, ii.igst_rate, ii.line_total FROM invoice_items ii JOIN invoices i ON i.id = ii.invoice_id ORDER BY i.invoice_date DESC, i.id DESC LIMIT 200', '{\"slot\":\"detail\",\"layout\":\"table\",\"columns\":[{\"label\":\"Invoice\",\"field\":\"invoice_no\"},{\"label\":\"Description\",\"field\":\"description\"},{\"label\":\"Qty\",\"field\":\"quantity\"},{\"label\":\"Rate\",\"field\":\"rate\"},{\"label\":\"CGST %\",\"field\":\"cgst_rate\"},{\"label\":\"SGST %\",\"field\":\"sgst_rate\"},{\"label\":\"IGST %\",\"field\":\"igst_rate\"},{\"label\":\"Line Total\",\"field\":\"line_total\"}]}', 2, '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(9, 'parties', 'action', 'delete_party', 'DELETE FROM parties WHERE id = :id', '{\"slot\":\"list\",\"method\":\"POST\",\"params\":[\"id\"],\"confirm\":\"Delete selected party?\",\"success\":\"Party removed.\"}', 3, '2025-10-08 17:07:56', '2025-10-08 17:07:56');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `app_pages`
+--
+
+CREATE TABLE `app_pages` (
+  `id` int(11) NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  `title` varchar(120) NOT NULL,
+  `page_type` enum('list','form','workspace') NOT NULL,
+  `template` mediumtext NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `app_pages`
+--
+
+INSERT INTO `app_pages` (`id`, `slug`, `title`, `page_type`, `template`, `created_at`, `updated_at`) VALUES
+(1, 'dashboard', 'Accounting Workspace', 'workspace', '<div class=\"card\"><h1>{{title}}</h1><p class=\"muted\">Central dashboard for memory-efficient GST accounting.</p><div class=\"grid\">{{component:dashboard_summary}}</div><div class=\"grid\">{{component:recent_activity}}</div></div>', '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(2, 'parties', 'Parties', 'workspace', '<div class=\"card\"><h1>Parties Master</h1><p class=\"muted\">Maintain suppliers and customers; data stays inside the database.</p>{{component:party_list}}<hr class=\"divider\" />{{component:party_form}}</div>', '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(3, 'items', 'Items', 'workspace', '<div class=\"card\"><h1>Inventory Items</h1><p class=\"muted\">Items with GST rates and default pricing.</p>{{component:item_list}}<hr class=\"divider\" />{{component:item_form}}</div>', '2025-10-08 17:07:56', '2025-10-08 17:07:56'),
+(4, 'invoices', 'Invoices', 'workspace', '<div class=\"card\"><h1>Invoices</h1><p class=\"muted\">Post sales and purchases directly from database metadata.</p>{{component:invoice_list}}<hr class=\"divider\" />{{component:invoice_line_items}}</div>', '2025-10-08 17:07:56', '2025-10-08 17:07:56');
 
 -- --------------------------------------------------------
 
@@ -8396,6 +8331,20 @@ ALTER TABLE `accounts`
   ADD KEY `idx_accounts_active` (`is_active`);
 
 --
+-- Indexes for table `app_components`
+--
+ALTER TABLE `app_components`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_component_slug_name` (`page_slug`,`name`);
+
+--
+-- Indexes for table `app_pages`
+--
+ALTER TABLE `app_pages`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_app_pages_slug` (`slug`);
+
+--
 -- Indexes for table `app_settings`
 --
 ALTER TABLE `app_settings`
@@ -8703,6 +8652,18 @@ ALTER TABLE `accounts`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
+-- AUTO_INCREMENT for table `app_components`
+--
+ALTER TABLE `app_components`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT for table `app_pages`
+--
+ALTER TABLE `app_pages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT for table `bank_reconciliation`
 --
 ALTER TABLE `bank_reconciliation`
@@ -8945,6 +8906,12 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`u184420243_gst4`@`%` SQL SECURITY DEFINER VI
 --
 ALTER TABLE `accounts`
   ADD CONSTRAINT `accounts_ibfk_1` FOREIGN KEY (`parent_code`) REFERENCES `accounts` (`code`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `app_components`
+--
+ALTER TABLE `app_components`
+  ADD CONSTRAINT `fk_app_components_page` FOREIGN KEY (`page_slug`) REFERENCES `app_pages` (`slug`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `bank_reconciliation`
