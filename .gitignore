@@ -2,6 +2,10 @@
 /exports/*.csv
 /exports/*.log
 
+# Environment and configuration
+.env
+config.local.php
+
 # Temporary files
 *.tmp
 *.bak
