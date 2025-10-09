@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Zoho Books Migration - Visual Guide</title>
+    <style>
+        :root { color-scheme: dark; }
+        body {
+            margin: 0;
+            background: #0b0c10;
+            color: #e5e7eb;
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #60a5fa;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .step {
+            background: #0f172a;
+            border: 2px solid #1f2937;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+        .step.active {
+            border-color: #1d4ed8;
+            box-shadow: 0 0 20px rgba(29, 78, 216, 0.3);
+        }
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #1d4ed8;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 15px;
+        }
+        .step-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .step-desc {
+            color: #94a3b8;
+            margin-left: 55px;
+            line-height: 1.6;
+        }
+        .code-box {
+            background: #0b1120;
+            border: 1px solid #1f2937;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0 10px 55px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        .arrow {
+            text-align: center;
+            color: #1d4ed8;
+            font-size: 2em;
+            margin: -10px 0;
+        }
+        .warning {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            color: #fee2e2;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #14532d;
+            border: 1px solid #22c55e;
+            color: #bbf7d0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #1e3a8a;
+            border: 1px solid #1d4ed8;
+            color: #93c5fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #1d4ed8;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 5px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #1e40af;
+        }
+        .checklist {
+            margin-left: 55px;
+        }
+        .checklist li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .card {
+            background: #0b1120;
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #60a5fa;
+        }
+        .highlight {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Zoho Books Migration - Visual Guide</h1>
+
+        <div class="info">
+            <strong>📌 Migration Overview</strong><br>
+            This guide walks you through exporting your GST accounting data and importing it into Zoho Books.
+            Total time: ~1-2 hours depending on data volume.
+        </div>
+
+        <div class="flow">
+            <!-- Step 1 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    Prepare Your Environment
+                </div>
+                <div class="step-desc">
+                    Ensure all prerequisites are met before starting the export process.
+                </div>
+                <ul class="checklist">
+                    <li>✅ Database is accessible and up-to-date</li>
+                    <li>✅ PHP 7.4+ installed with PDO extension</li>
+                    <li>✅ <code>exports/</code> directory is writable</li>
+                    <li>✅ Zoho Books account created</li>
+                </ul>
+                <div class="code-box">
+                    # Test database connection<br>
+                    php -r "require 'db.php'; db(); echo 'Connected!\n';"
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 2 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    Export Your Data
+                </div>
+                <div class="step-desc">
+                    Run the export utility to generate CSV files compatible with Zoho Books.
+                </div>
+                <div class="code-box">
+                    # Export all data types<br>
+                    php zoho_export.php all<br>
+                    <br>
+                    # Or use the web interface<br>
+                    php -S 0.0.0.0:8080<br>
+                    # Visit: http://localhost:8080/zoho_export.php
+                </div>
+                <div class="step-desc">
+                    <strong>Generated files:</strong>
+                </div>
+                <div class="grid">
+                    <div class="card">
+                        <h3>📇 Contacts</h3>
+                        <code>zoho_contacts_*.csv</code>
+                        <p>Customers & Vendors with GSTIN</p>
+                    </div>
+                    <div class="card">
+                        <h3>📦 Items</h3>
+                        <code>zoho_items_*.csv</code>
+                        <p>Products with HSN codes</p>
+                    </div>
+                    <div class="card">
+                        <h3>💰 Sales</h3>
+                        <code>zoho_sales_invoices_*.csv</code>
+                        <p>Sales invoices with GST</p>
+                    </div>
+                    <div class="card">
+                        <h3>🛒 Purchases</h3>
+                        <code>zoho_purchase_invoices_*.csv</code>
+                        <p>Purchase bills with ITC</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 3 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    Configure Zoho Books
+                </div>
+                <div class="step-desc">
+                    Set up your organization and tax rates before importing data.
+                </div>
+                <a href="https://books.zoho.in/app" target="_blank" class="btn">Open Zoho Books →</a>
+                <ul class="checklist">
+                    <li>Log in to Zoho Books</li>
+                    <li>Settings → Organization Profile (verify GSTIN, state)</li>
+                    <li>Settings → Taxes → Create GST rates:
+                        <ul>
+                            <li>GST @ 5%, 12%, 18%, 28% (CGST+SGST groups)</li>
+                            <li>IGST @ 5%, 12%, 18%, 28%</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 4 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    Import Contacts (CRITICAL FIRST STEP)
+                </div>
+                <div class="step-desc">
+                    <span class="highlight">⚠️ IMPORTANT:</span> Contacts MUST be imported before invoices!
+                </div>
+                <ul class="checklist">
+                    <li>Go to Settings → Import Data → Contacts</li>
+                    <li>Upload <code>zoho_contacts_*.csv</code></li>
+                    <li>Map columns (auto-detected from headers)</li>
+                    <li>Review and click Import</li>
+                    <li>Check import log for errors</li>
+                    <li>Fix any GSTIN validation issues</li>
+                </ul>
+                <div class="warning">
+                    <strong>⚠️ Common Issues:</strong>
+                    <ul>
+                        <li>Duplicate GSTIN errors → Consolidate duplicate parties</li>
+                        <li>Invalid GSTIN format → Fix in source database and re-export</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 5 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">5</span>
+                    Import Items (Products)
+                </div>
+                <div class="step-desc">
+                    Import your product catalog with HSN codes.
+                </div>
+                <ul class="checklist">
+                    <li>Settings → Import Data → Items</li>
+                    <li>Upload <code>zoho_items_*.csv</code></li>
+                    <li>Map columns and import</li>
+                    <li>After import: Configure tax rates for each item</li>
+                    <li>Update sales/purchase rates as needed</li>
+                </ul>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 6 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">6</span>
+                    Import Sales Invoices
+                </div>
+                <div class="step-desc">
+                    Import your sales transaction history.
+                </div>
+                <ul class="checklist">
+                    <li>Settings → Import Data → Invoices</li>
+                    <li>Upload <code>zoho_sales_invoices_*.csv</code></li>
+                    <li>Zoho will match customer names from Step 4</li>
+                    <li>Review import errors (usually name mismatches)</li>
+                    <li>Verify tax calculations</li>
+                </ul>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 7 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">7</span>
+                    Import Purchase Invoices
+                </div>
+                <div class="step-desc">
+                    Import your purchase/bills history.
+                </div>
+                <ul class="checklist">
+                    <li>Settings → Import Data → Bills</li>
+                    <li>Upload <code>zoho_purchase_invoices_*.csv</code></li>
+                    <li>Match vendors from imported contacts</li>
+                    <li>Tag bills for ITC eligibility</li>
+                </ul>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 8 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">8</span>
+                    Verify Data Integrity
+                </div>
+                <div class="step-desc">
+                    Perform thorough verification before going live.
+                </div>
+                <ul class="checklist">
+                    <li>Check import success rates in Settings → Import History</li>
+                    <li>Compare record counts with source database</li>
+                    <li>Verify GST calculations: Reports → GST Reports</li>
+                    <li>Spot-check random invoices for accuracy</li>
+                    <li>Generate trial GSTR-1 and compare with previous returns</li>
+                </ul>
+                <div class="success">
+                    <strong>✅ Verification Checklist:</strong>
+                    <ul style="margin: 10px 0 0 20px;">
+                        <li>Total sales match between systems</li>
+                        <li>Total purchases match between systems</li>
+                        <li>GST liability calculations are correct</li>
+                        <li>All parties have been imported</li>
+                        <li>All active items are present</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 9 -->
+            <div class="step">
+                <div class="step-title">
+                    <span class="step-number">9</span>
+                    Post-Migration Setup
+                </div>
+                <div class="step-desc">
+                    Configure Zoho Books for day-to-day operations.
+                </div>
+                <ul class="checklist">
+                    <li>Set up invoice numbering sequences</li>
+                    <li>Configure invoice templates and terms</li>
+                    <li>Add team members and set permissions</li>
+                    <li>Connect payment gateways if needed</li>
+                    <li>Set up automated payment reminders</li>
+                    <li>Configure bank feeds/reconciliation</li>
+                </ul>
+            </div>
+
+            <div class="arrow">↓</div>
+
+            <!-- Step 10 -->
+            <div class="step active">
+                <div class="step-title">
+                    <span class="step-number">✓</span>
+                    Go Live!
+                </div>
+                <div class="step-desc">
+                    You're ready to use Zoho Books for your accounting.
+                </div>
+                <div class="success">
+                    <strong>🎉 Congratulations!</strong> Your data has been successfully migrated to Zoho Books.
+                    <br><br>
+                    <strong>Recommended:</strong> Run both systems in parallel for 1-2 months to ensure everything works correctly.
+                </div>
+            </div>
+        </div>
+
+        <div class="info" style="margin-top: 40px;">
+            <strong>📚 Additional Resources</strong><br>
+            <a href="ZOHO_QUICK_REFERENCE.md" style="color: #93c5fd;">Quick Reference Card</a> •
+            <a href="ZOHO_IMPORT_GUIDE.md" style="color: #93c5fd;">Complete Import Guide</a> •
+            <a href="ZOHO_EXPORT_README.md" style="color: #93c5fd;">Technical Documentation</a>
+        </div>
+    </div>
+</body>
+</html>
