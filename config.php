@@ -24,5 +24,5 @@ $config = [
 ];
 
 if (!isset($config[$ENV])) {
-    throw new RuntimeException("Unknown APP_ENV '${ENV}'. Set APP_ENV environment variable to one of: " . implode(', ', array_keys($config)));
+    throw new RuntimeException("Unknown APP_ENV '{$ENV}'. Set APP_ENV environment variable to one of: " . implode(', ', array_keys($config)));
 }

@@ -1,4 +1,10 @@
 <?php // db.php
+
+// Preflight check: ensure configuration file exists
+if (!file_exists(__DIR__ . '/config.php')) {
+    die('ERROR: Configuration file is missing. Please ensure config.php exists in the same directory as db.php.');
+}
+
 require __DIR__ . '/config.php';
 
 /**
