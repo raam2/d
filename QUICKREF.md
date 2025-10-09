@@ -24,38 +24,40 @@ https://vedanthomestay.co.in/app/main_entry.php?p=invoices
 
 ## Database Credentials
 
+**Note:** The actual credentials are stored in `config.php`. Replace the placeholders below with your actual values.
+
 ### Local
 - Host: `localhost`
 - Port: `3306`
-- User: `u184420243_gst4`
-- Pass: `Raam2*:1`
-- DB: `u184420243_jayanti_enter4`
+- User: `YOUR_LOCAL_DB_USER`
+- Pass: `YOUR_LOCAL_PASSWORD`
+- DB: `YOUR_DATABASE_NAME`
 
 ### Production
-- Host: `217.21.95.103`
+- Host: `YOUR_PRODUCTION_HOST`
 - Port: `3306`
-- User: `u184420243_gst4`
-- Pass: `Raam2:=195`
-- DB: `u184420243_jayanti_enter4`
+- User: `YOUR_PRODUCTION_DB_USER`
+- Pass: `YOUR_PRODUCTION_PASSWORD`
+- DB: `YOUR_DATABASE_NAME`
 
 ## Common Commands
 
 ### Import Database
 ```bash
-# Local
-mysql -u u184420243_gst4 -p'Raam2*:1' u184420243_jayanti_enter4 < database_already_exit.sql
+# Local (replace with your actual credentials from config.php)
+mysql -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE < database_already_exit.sql
 
-# Production
-mysql -h 217.21.95.103 -u u184420243_gst4 -p'Raam2:=195' u184420243_jayanti_enter4 < database_already_exit.sql
+# Production (replace with your actual credentials from config.php)
+mysql -h YOUR_HOST -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE < database_already_exit.sql
 ```
 
 ### Test Connection
 ```bash
-# Local
-mysql -u u184420243_gst4 -p'Raam2*:1' u184420243_jayanti_enter4 -e "SELECT 1"
+# Local (replace with your actual credentials from config.php)
+mysql -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE -e "SELECT 1"
 
-# Production
-mysql -h 217.21.95.103 -u u184420243_gst4 -p'Raam2:=195' u184420243_jayanti_enter4 -e "SELECT 1"
+# Production (replace with your actual credentials from config.php)
+mysql -h YOUR_HOST -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE -e "SELECT 1"
 ```
 
 ### Start Local Server

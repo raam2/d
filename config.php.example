@@ -1,0 +1,28 @@
+<?php
+// Application configuration - EXAMPLE FILE
+// Copy this to config.php and update with your actual credentials
+
+$ENV = getenv('APP_ENV') ?: 'local';
+
+$config = [
+    'local' => [
+        'host' => getenv('DB_HOST') ?: 'localhost',
+        'port' => getenv('DB_PORT') ?: '3306',
+        'user' => getenv('DB_USER') ?: 'YOUR_LOCAL_DB_USER',
+        'pass' => getenv('DB_PASS') ?: 'YOUR_LOCAL_PASSWORD',
+        'db'   => getenv('DB_NAME') ?: 'YOUR_DATABASE_NAME',
+        'charset' => 'utf8mb4',
+    ],
+    'production' => [
+        'host' => getenv('DB_HOST') ?: 'YOUR_PRODUCTION_HOST',
+        'port' => getenv('DB_PORT') ?: '3306',
+        'user' => getenv('DB_USER') ?: 'YOUR_PRODUCTION_DB_USER',
+        'pass' => getenv('DB_PASS') ?: 'YOUR_PRODUCTION_PASSWORD',
+        'db'   => getenv('DB_NAME') ?: 'YOUR_DATABASE_NAME',
+        'charset' => 'utf8mb4',
+    ],
+];
+
+if (!isset($config[$ENV])) {
+    throw new RuntimeException("Unknown APP_ENV '${ENV}'. Set APP_ENV environment variable to one of: " . implode(', ', array_keys($config)));
+}

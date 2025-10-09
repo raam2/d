@@ -86,12 +86,12 @@ Simpler than diagnostics, focuses on database connectivity only.
 2. Reset database password if forgotten
 3. Test connection manually:
    ```bash
-   mysql -h localhost -u u184420243_gst4 -p'Raam2*:1' u184420243_jayanti_enter4 -e "SELECT 1"
+   mysql -h localhost -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE -e "SELECT 1"
    ```
 4. Verify user has permissions:
    ```sql
-   SHOW GRANTS FOR 'u184420243_gst4'@'localhost';
-   GRANT ALL ON u184420243_jayanti_enter4.* TO 'u184420243_gst4'@'localhost';
+   SHOW GRANTS FOR 'YOUR_DB_USER'@'localhost';
+   GRANT ALL ON YOUR_DATABASE.* TO 'YOUR_DB_USER'@'localhost';
    FLUSH PRIVILEGES;
    ```
 

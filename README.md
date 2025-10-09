@@ -10,15 +10,17 @@ Import the database schema on your environment:
 
 **Local (MariaDB):**
 ```bash
-mysql -u u184420243_gst4 -p'Raam2*:1' u184420243_jayanti_enter4 < database_already_exit.sql
+mysql -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE < database_already_exit.sql
 ```
 
 **Production (MySQL on Hostinger):**
 ```bash
-mysql -h 217.21.95.103 -u u184420243_gst4 -p'Raam2:=195' u184420243_jayanti_enter4 < database_already_exit.sql
+mysql -h YOUR_HOST -u YOUR_DB_USER -p'YOUR_PASSWORD' YOUR_DATABASE < database_already_exit.sql
 ```
 
 Or use phpMyAdmin to import `database_already_exit.sql`.
+
+**Note:** Replace placeholders with actual credentials from `config.php`
 
 ### 2. Deploy PHP Files
 
@@ -91,19 +93,21 @@ Available pages:
 
 ## Database Credentials
 
-Configured in `config.php`:
+The actual credentials are configured in `config.php`. The application supports two environments:
 
 **Local Environment:**
-- Host: `localhost`
-- User: `u184420243_gst4`
-- Password: `Raam2*:1`
-- Database: `u184420243_jayanti_enter4`
+- Configured for local development with MariaDB
+- See `config.php` 'local' section for actual values
 
 **Production Environment:**
-- Host: `217.21.95.103`
-- User: `u184420243_gst4`
-- Password: `Raam2:=195`
-- Database: `u184420243_jayanti_enter4`
+- Configured for Hostinger MySQL server
+- See `config.php` 'production' section for actual values
+
+**Security Best Practices:**
+- Copy `config.php.example` to `config.php` and fill in your credentials
+- Never commit `config.php` with real passwords to public repositories
+- Use environment variables in production when possible
+- Protect `config.php` with `.htaccess` (see `.htaccess.example`)
 
 ## Repository alignment
 
