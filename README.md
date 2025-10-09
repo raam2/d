@@ -48,6 +48,41 @@ The script uses upserts so component definitions are updated without touching yo
   - Existing accounting schema (parties, items, invoices, invoice_items, GST configuration, etc.).
 - `app_build.md` and `plan_implementation.md` describe the architecture and implementation blueprint.
 
+## Zoho Books Integration
+
+This repository includes a complete export utility for migrating data to Zoho Books:
+
+### Quick Export
+
+```bash
+# Export all data at once
+php zoho_export.php all
+
+# Or use the web interface
+php -S 0.0.0.0:8080
+# Then visit: http://localhost:8080/zoho_export.php
+```
+
+### What Gets Exported
+
+- **Contacts:** All parties (customers and vendors) with GSTIN
+- **Items:** All active products with HSN codes
+- **Invoices:** Sales and purchase invoices with line items
+- **GST Data:** Tax calculations and compliance information
+
+### Import to Zoho Books
+
+1. Visit https://books.zoho.in/app and log in
+2. Go to **Settings → Import Data**
+3. Import in order: Contacts → Items → Invoices
+4. See [ZOHO_IMPORT_GUIDE.md](ZOHO_IMPORT_GUIDE.md) for detailed instructions
+
+Files:
+- `zoho_export.php` - Export utility (web + CLI)
+- `ZOHO_EXPORT_README.md` - Quick reference
+- `ZOHO_IMPORT_GUIDE.md` - Complete step-by-step guide
+- `zoho_export_components.sql` - Database integration (optional)
+
 ## Next steps
 
 - Extend metadata by inserting new rows into `app_pages` / `app_components` instead of creating filesystem templates.
