@@ -3,14 +3,13 @@
 // Adjust database credentials via environment variables or by editing the arrays below.
 
 $ENV = getenv('APP_ENV') ?: 'local';
-$ENV = 'production';
 $config = [
     'local' => [
         'host' => getenv('DB_HOST') ?: 'localhost',
         'port' => getenv('DB_PORT') ?: '3306',
-        'user' => getenv('DB_USER') ?: 'xxxxxxxx',
-        'pass' => getenv('DB_PASS') ?: 'Raam2*:1',
-        'db'   => getenv('DB_NAME') ?: 'xxxxxxxxxxx',
+        'user' => getenv('DB_USER') ?: 'appuser',
+        'pass' => getenv('DB_PASS') ?: 'apppass123',
+        'db'   => getenv('DB_NAME') ?: 'accounting_db',
         'charset' => 'utf8mb4',
     ],
     'production' => [
