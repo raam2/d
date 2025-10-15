@@ -1,5 +1,7 @@
 # Temporary and generated files
 schema_only.sql
+metadata_only.sql
+metadata_import.sql
 
 # IDE and editor files
 .vscode/

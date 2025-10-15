@@ -168,11 +168,24 @@ VALUES ('mypage', 'list', 'mylist',
 
 ## Screenshots
 
-### Dashboard
-![Dashboard](https://github.com/user-attachments/assets/ed722115-d4d4-44ff-918c-e593b45893a3)
+### Dashboard (Full Featured)
+![Dashboard](https://github.com/user-attachments/assets/4ba8b101-4db8-4726-9d0e-f1b8499fbebd)
+*Central dashboard showing party statistics and recent activity log*
 
-### Home Page
+### Parties Management
+![Parties](https://github.com/user-attachments/assets/6811bf49-fda3-4631-a709-62f58313ffe5)
+*Party master with list view and inline form for adding customers/suppliers*
+
+### Items Catalog
+![Items](https://github.com/user-attachments/assets/b10009bc-f50c-4660-bba7-5f0ca19f7a4d)
+*Inventory items with HSN codes and GST rates*
+
+### Initial Setup Views
+![Dashboard Simple](https://github.com/user-attachments/assets/ed722115-d4d4-44ff-918c-e593b45893a3)
+*Dashboard - basic view*
+
 ![Home](https://github.com/user-attachments/assets/3e84ee64-cd2a-47a4-82a7-e82d06cdbd20)
+*Home page - welcome screen*
 
 ## Support
 
