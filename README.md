@@ -2,6 +2,12 @@
 
 This repository stores the full database schema and configuration for the Jayanti Enterprises accounting workspace. All application pages, components, styles, and sample data are persisted inside the SQL dump so deployments stay lightweight and offline-ready.
 
+## Browsing the Application
+
+**Production URL**: https://500875.sahakari.patanjaliayurved.org:8040/#/
+
+For detailed browsing instructions and local setup guide, see [BROWSING_GUIDE.md](BROWSING_GUIDE.md).
+
 ## Getting started
 
 1. Provision a MariaDB or MySQL 8+ database.
