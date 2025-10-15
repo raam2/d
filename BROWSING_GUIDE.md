@@ -168,7 +168,7 @@ VALUES ('mypage', 'list', 'mylist',
 
 ## Screenshots
 
-### Dashboard (Full Featured)
+### Dashboard - Complete View
 ![Dashboard](https://github.com/user-attachments/assets/4ba8b101-4db8-4726-9d0e-f1b8499fbebd)
 *Central dashboard showing party statistics and recent activity log*
 
@@ -180,9 +180,9 @@ VALUES ('mypage', 'list', 'mylist',
 ![Items](https://github.com/user-attachments/assets/b10009bc-f50c-4660-bba7-5f0ca19f7a4d)
 *Inventory items with HSN codes and GST rates*
 
-### Initial Setup Views
+### Basic Configuration Views
 ![Dashboard Simple](https://github.com/user-attachments/assets/ed722115-d4d4-44ff-918c-e593b45893a3)
-*Dashboard - basic view*
+*Dashboard - minimal setup view*
 
 ![Home](https://github.com/user-attachments/assets/3e84ee64-cd2a-47a4-82a7-e82d06cdbd20)
 *Home page - welcome screen*
