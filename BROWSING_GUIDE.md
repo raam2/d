@@ -5,11 +5,13 @@ This is a database-driven GST accounting application with a dark-themed UI. The 
 
 ## Accessing the Application
 
-### Production URL (Currently Blocked)
+### Production URL
 The production application is hosted at:
 ```
-https://500875.sahakari.patanjaliayurved.org:8040/#/
+https://500875.sahakari.patanjaliayurved.org
 ```
+
+**Admin Login:** ID: `admin` | Password: `16877`
 
 **Note**: This URL may be blocked in some environments due to domain restrictions.
 
