@@ -13,6 +13,137 @@ https://500875.sahakari.patanjaliayurved.org:8040/#/
 
 **Note**: This URL may be blocked in some environments due to domain restrictions.
 
+## Admin Features
+
+The production application at **https://500875.sahakari.patanjaliayurved.org** provides comprehensive accounting functionality for admin users. 
+
+**Admin Login Credentials:**
+- **Username:** admin
+- **Password:** 16877
+
+### Core Admin Features
+
+#### 1. Dashboard
+The dashboard provides a centralized view of business operations:
+
+- **Statistics Overview**: Real-time counts of customers, suppliers, and combined parties
+- **Activity Logs**: Comprehensive system diagnostics showing user actions, timestamps, and operations
+- **Dark Theme**: Professional dark UI (#0b0c10 background) optimized for extended use and reduced eye strain
+- **Responsive Design**: Fully functional across desktop, tablet, and mobile devices
+- **Quick Access**: Direct navigation to all major modules
+
+#### 2. Parties Management
+Complete CRUD operations for customer and supplier master data:
+
+- **Create/Read/Update/Delete**: Full lifecycle management of party records
+- **GSTIN Validation**: 15-character pattern validation for Indian GST Identification Numbers
+- **Party Types**: Support for Customer, Supplier, or Both classifications
+- **Contact Information**: Name, email, phone, city, and state tracking
+- **State Management**: Dropdown selection for Indian states
+- **Search & Filter**: Quick lookup of parties by name, GSTIN, or location
+
+#### 3. Items Catalog
+Product and service inventory with comprehensive tax configuration:
+
+- **Item Master CRUD**: Create, view, edit, and delete inventory items
+- **HSN Code Management**: 8-character HSN/SAC code support for GST compliance
+- **GST Tax Configuration**: 
+  - CGST (Central GST) rate configuration
+  - SGST (State GST) rate configuration
+  - IGST (Integrated GST) rate configuration
+- **Unit Management**: Customizable units of measurement (PCS, KG, LTR, etc.)
+- **Default Pricing**: Base rate/price per unit
+- **Tax Rate Precision**: Decimal precision up to 0.01% for accurate tax calculations
+
+#### 4. Invoice Management
+Full-featured invoicing system with Indian GST compliance:
+
+- **Invoice CRUD**: Complete invoice lifecycle management
+- **Invoice Types**: Support for different transaction types (Sales, Purchase, etc.)
+- **GST Compliance**: 
+  - Automatic CGST/SGST/IGST calculation based on place of supply
+  - State-wise tax rate application
+  - GST-compliant invoice numbering
+- **Reverse Charge Mechanism**: Flag support for reverse charge applicability under GST
+- **ITC Eligibility**: Input Tax Credit eligibility tracking for purchases
+- **Place of Supply**: State selection for determining applicable GST rates
+- **Invoice Line Items**: Multiple items per invoice with quantity, rate, and tax details
+- **Invoice Status**: Draft, Posted, Cancelled status tracking
+- **Party Linkage**: Direct integration with parties master
+
+#### 5. Sidebar Navigation
+Dynamic, database-driven navigation system:
+
+- **Auto-generated Menu**: Sidebar automatically populated from `app_pages` table
+- **Page Listing**: All available pages displayed with titles
+- **Quick Search**: Integrated search for parties, items, and invoices
+- **Contextual Navigation**: Current page highlighting
+- **Collapsible Design**: Space-efficient sidebar for optimal screen usage
+
+#### 6. Metadata-Driven UI
+Complete application configuration stored in database:
+
+- **Page Definitions**: All pages defined in `app_pages` table (slug, title, template)
+- **Component System**: Reusable UI components in `app_components` table
+- **List Components**: SQL-driven data grids with customizable columns
+- **Form Components**: Dynamic form generation from JSON metadata
+- **Action Components**: Quick action buttons for batch operations
+- **Template Placeholders**: `{{component:name}}` syntax for flexible layouts
+- **No Filesystem Changes**: Add new features by inserting database records
+
+#### 7. Security & Validation
+Enterprise-grade security throughout the application:
+
+- **Prepared Statements**: All SQL queries use PDO prepared statements preventing SQL injection
+- **HTML Escaping**: All output escaped with `htmlspecialchars()` preventing XSS attacks
+- **Input Validation**: Pattern validation on critical fields (GSTIN, email, phone)
+- **Form Tokens**: Hidden `__page` and `__component` fields for secure routing
+- **Type Safety**: Strict type declarations in PHP code
+- **Parameter Binding**: Named parameters (`:field`) for all SQL operations
+- **Error Handling**: Comprehensive try-catch blocks with safe error messages
+
+#### 8. Configuration & Setup
+Flexible environment and database configuration:
+
+- **Dual Environment Support**: Local (MariaDB) and Production (MySQL) configurations
+- **Environment Variables**: `APP_ENV`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`
+- **Database Abstraction**: PDO layer supporting MySQL 8+ and MariaDB 10.3+
+- **Connection Pooling**: Efficient database connection management
+- **Charset Configuration**: UTF-8 (utf8mb4) for full Unicode support
+- **Schema Migrations**: SQL-based database updates and metadata patches
+
+#### 9. Diagnostics & Logs
+Comprehensive system monitoring and troubleshooting:
+
+- **Diagnostics Table**: System activity log tracking all major operations
+- **Timestamp Tracking**: Precise datetime stamps for all events
+- **Action Logging**: User actions, SQL operations, and system events
+- **Error Tracking**: Failed operations logged with error messages
+- **Activity Dashboard**: Real-time view of recent system activity
+- **Performance Monitoring**: Query execution tracking for optimization
+
+#### 10. Inline Help & Documentation
+Built-in guidance for users:
+
+- **Form Labels**: Clear, descriptive labels for all input fields
+- **Placeholder Text**: Helpful examples in form fields
+- **Success Messages**: Confirmation feedback after operations
+- **Error Messages**: User-friendly error descriptions
+- **Empty States**: Helpful messages when no data is available
+- **Field Validation Messages**: Real-time validation feedback
+
+### Technical Architecture
+
+The admin features are built on a robust technical foundation:
+
+- **Single Entry Point**: `main_entry.php` handles all requests
+- **Database Layer**: `db.php` provides PDO abstraction with prepared statements
+- **Configuration**: `config.php` manages environment-specific settings
+- **Template Engine**: Safe server-side rendering without code evaluation
+- **Vanilla JavaScript**: 10KB of dependency-free client-side code
+- **Inline CSS**: 8KB dark theme CSS with no external dependencies
+- **Offline Capability**: Full functionality without internet connection
+
 ### Local Development Setup
 
 If you cannot access the production URL, you can run the application locally:

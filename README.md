@@ -4,9 +4,26 @@ This repository stores the full database schema and configuration for the Jayant
 
 ## Browsing the Application
 
-**Production URL**: https://500875.sahakari.patanjaliayurved.org:8040/#/
+**Production URL**: https://500875.sahakari.patanjaliayurved.org
 
-For detailed browsing instructions and local setup guide, see [BROWSING_GUIDE.md](BROWSING_GUIDE.md).
+**Admin Credentials**: ID: `admin` | Password: `16877`
+
+### Admin Features Overview
+
+The application provides comprehensive accounting functionality for admin users, including:
+
+- **Dashboard**: Real-time statistics, activity logs, dark theme UI, fully responsive design
+- **Parties Management**: Complete CRUD operations with GSTIN validation for customers and suppliers
+- **Items Catalog**: Product/service inventory with HSN codes, GST tax configuration (CGST/SGST/IGST), and unit management
+- **Invoice Management**: Full invoice lifecycle with GST compliance, reverse charge mechanism, and ITC eligibility tracking
+- **Sidebar Navigation**: Dynamic database-driven menu system with quick search
+- **Metadata-Driven UI**: All pages and components configurable via database tables
+- **Security & Validation**: PDO prepared statements, HTML escaping, input validation throughout
+- **Configuration & Setup**: Dual environment support (local/production) with flexible database configuration
+- **Diagnostics & Logs**: Comprehensive system activity tracking and monitoring
+- **Inline Help**: Built-in documentation, validation messages, and user guidance
+
+For detailed browsing instructions, feature descriptions, and local setup guide, see [BROWSING_GUIDE.md](BROWSING_GUIDE.md).
 
 ## Getting started
 
