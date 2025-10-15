@@ -4,9 +4,11 @@ This repository stores the full database schema and configuration for the Jayant
 
 ## Browsing the Application
 
-**Production URL**: https://500875.sahakari.patanjaliayurved.org:8040/#/
+**Production URL**: https://500875.sahakari.patanjaliayurved.org
 
-For detailed browsing instructions and local setup guide, see [BROWSING_GUIDE.md](BROWSING_GUIDE.md).
+**Admin Access**: Login with ID `admin` and password `16877` to access admin-level features.
+
+For detailed browsing instructions, complete admin feature documentation, and local setup guide, see [BROWSING_GUIDE.md](BROWSING_GUIDE.md).
 
 ## Getting started
 

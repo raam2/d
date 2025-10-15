@@ -5,13 +5,17 @@ This is a database-driven GST accounting application with a dark-themed UI. The 
 
 ## Accessing the Application
 
-### Production URL (Currently Blocked)
+### Production URL
 The production application is hosted at:
 ```
-https://500875.sahakari.patanjaliayurved.org:8040/#/
+https://500875.sahakari.patanjaliayurved.org
 ```
 
-**Note**: This URL may be blocked in some environments due to domain restrictions.
+**Admin Login Credentials**:
+- Username/ID: `admin`
+- Password: `16877`
+
+**Note**: This URL may be blocked in some environments due to domain restrictions. See the Local Development Setup section below if you cannot access the production URL.
 
 ### Local Development Setup
 
@@ -69,6 +73,204 @@ If you cannot access the production URL, you can run the application locally:
    ```
    http://localhost:8080
    ```
+
+## Admin Features (Production Access)
+
+**Production URL**: https://500875.sahakari.patanjaliayurved.org
+
+**Admin Credentials**:
+- **Username/ID**: admin
+- **Password**: 16877
+
+The following features are available to admin users after logging in to the production system. These are admin-level capabilities for managing the complete accounting workspace.
+
+### 1. Dashboard (Accounting Workspace)
+**Access**: `?p=dashboard` or default landing page
+
+The dashboard provides a central view of the accounting system with:
+
+- **Statistics Panel**: Real-time party statistics broken down by type (customer, supplier, both)
+  - Shows count of parties by category
+  - Displayed in stat-card layout for quick overview
+  
+- **Recent Activity Log**: Last 10 diagnostic events with timestamps
+  - Displays date/time of each event
+  - Shows severity level (info, warning, error)
+  - Includes descriptive messages for tracking system activity
+  
+- **Dark Theme Interface**: Memory-efficient dark UI optimized for extended use with minimal eye strain
+  - Uses CSS variables for consistent theming
+  - Color-coded elements for better visual hierarchy
+  
+- **Responsive Layout**: Adapts to desktop, tablet, and mobile viewports
+  - Collapsible sidebar on smaller screens
+  - Grid-based dashboard cards that reflow automatically
+
+### 2. Parties Management
+**Access**: `?p=parties`
+
+Complete CRUD operations for customer and supplier management:
+
+- **Party List View**:
+  - Displays all parties with: Name, GSTIN, Type, City, State, Email, Phone, Created Date
+  - Sorted by most recently created (descending)
+  - Limit of 200 most recent records displayed
+  - Edit links for each party record
+
+- **Add New Party Form**:
+  - **Required fields**: Party Name
+  - **Optional fields**: GSTIN (with validation), City, State, Email, Phone
+  - **Party Type selector**: Customer, Supplier, or Both
+  - **GSTIN Validation**: Pattern validation for 15-character alphanumeric format (^[0-9A-Z]{15}$)
+  - **Default State**: Pre-filled with "Uttarakhand" (configurable)
+  - **Email validation**: Built-in email format checking
+
+- **Delete Party Action**: Remove parties via action button with confirmation
+
+### 3. Items Catalog
+**Access**: `?p=items`
+
+Inventory and product/service management with GST configuration:
+
+- **Item List View**:
+  - Displays: Item Name, HSN Code, Unit, Default Rate, CGST%, SGST%, IGST%, Created Date
+  - Shows up to 200 most recent items
+  - Sorted by creation date (descending)
+
+- **Add New Item Form**:
+  - **Required fields**: Item Name, HSN Code (8 characters max)
+  - **Unit of Measurement**: Default "PCS" (pieces), customizable
+  - **Pricing**: Default rate with decimal precision (0.01)
+  - **GST Tax Configuration**:
+    - CGST Rate % (Central GST)
+    - SGST Rate % (State GST)  
+    - IGST Rate % (Integrated GST)
+    - All tax rates support decimal precision (0.01)
+  
+- **HSN Code Management**: Harmonized System of Nomenclature codes for GST compliance
+
+### 4. Invoice Management
+**Access**: `?p=invoices`
+
+Complete invoice processing with GST compliance features:
+
+- **Invoice List View**:
+  - Displays: Invoice Number, Date, Type, Status, Place of Supply
+  - **Special GST Fields**:
+    - Reverse Charge indicator (Yes/No)
+    - ITC Eligible indicator (Yes/No)
+  - Sorted by invoice date and ID (descending)
+  - Shows up to 200 most recent invoices
+
+- **Invoice Types Supported**:
+  - Sale invoices
+  - Purchase invoices
+  - Credit notes
+  - Debit notes
+
+- **GST Compliance Features**:
+  - Place of Supply tracking for inter-state/intra-state taxation
+  - Reverse charge mechanism support
+  - Input Tax Credit (ITC) eligibility tracking
+  - Status management: Draft, Final, Cancelled
+
+- **Invoice Line Items Detail**:
+  - Shows item-level breakdown with quantities, rates
+  - CGST, SGST, IGST percentages per line item
+  - Line total calculations
+  - Links to parent invoice
+
+### 5. Sidebar Navigation
+**Dynamic Page Menu**:
+- Auto-populated from database (`app_pages` table)
+- Shows all available pages sorted alphabetically by title
+- Active page highlighting
+- Responsive collapse on mobile devices
+
+**Pages Section**: Lists Dashboard, Items, Invoices, Parties (alphabetically)
+
+### 6. Metadata-Driven UI Architecture
+
+The entire application UI is stored in the database:
+
+- **`app_pages` table**: Defines page routes, titles, templates
+  - Pages use placeholders like `{{component:name}}` for dynamic content
+  - Templates stored as HTML with component injection points
+
+- **`app_components` table**: Defines reusable UI components
+  - **List components**: SQL-driven data tables with column configuration
+  - **Form components**: Input forms with field definitions, validation rules
+  - **Action components**: Bulk operations with confirmation dialogs
+  - Each component linked to a page via `page_slug`
+
+- **Component Configuration** (stored as JSON):
+  - Column definitions (label, field mapping, formatting)
+  - Form field specifications (type, validation, defaults)
+  - Layout options (table, stat-card grid)
+  - Success/error messages
+
+### 7. Security & Validation
+
+- **SQL Injection Prevention**: All database queries use prepared statements with named parameters
+- **XSS Protection**: All output HTML-escaped via `htmlspecialchars()`
+- **Input Validation**:
+  - Pattern matching for GSTIN (15-character alphanumeric)
+  - Email format validation
+  - Required field enforcement
+  - Maxlength constraints
+  - Numeric step validation for decimals
+
+- **CSRF Protection**: Form submission tracking via hidden `__component` and `__page` fields
+
+### 8. Configuration & Setup
+
+- **App Settings** (`app_settings` table):
+  - Debug mode toggle
+  - Organization state configuration (default: "UK" for Uttarakhand)
+  - Database refresh commands
+  
+- **Environment Support**:
+  - Local development (MariaDB)
+  - Production hosting (MySQL)
+  - Configured via environment variables or `config.php`
+
+### 9. Diagnostics & Logging
+
+- **Diagnostics Table**: Captures system events
+  - Timestamp tracking
+  - Severity levels (info, warning, error)
+  - Descriptive messages
+  - Displayed on dashboard for admin visibility
+
+- **Error Logs Table**: Separate error tracking system
+- **Activity Monitoring**: Recent activity panel shows last 10 diagnostic entries
+
+### 10. Inline Help & Documentation
+
+- **Contextual Descriptions**: Each page includes muted-text descriptions explaining purpose
+  - Dashboard: "Central dashboard for memory-efficient GST accounting"
+  - Parties: "Maintain suppliers and customers; data stays inside the database"
+  - Items: "Items with GST rates and default pricing"
+  - Invoices: "Post sales and purchases directly from database metadata"
+
+- **Form Labels**: Clear, descriptive labels for all input fields
+- **Empty State Messages**: Helpful messages when no data exists ("No parties captured yet", "No items defined", "No invoices posted")
+
+### Additional Admin Capabilities
+
+- **Database-Backed Customization**: Admin can modify UI by updating database records
+- **No File System Changes**: All pages/components exist only in database tables
+- **Offline Capability**: System designed to work without external dependencies
+- **Memory Efficiency**: Lightweight CSS/JS, optimized queries, minimal DOM manipulation
+- **GST Accounting Features**:
+  - Chart of accounts with hierarchical structure
+  - Double-entry bookkeeping support
+  - Journal entries and journal lines
+  - Financial period management
+  - Bank reconciliation
+  - Inventory movements and valuations
+
+---
 
 ## Application Structure
 
