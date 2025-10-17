@@ -1,0 +1,10 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,CHARACTER_MAX_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,IS_PRIMARY_KEY,IS_UNIQUE,FK_REFERENCED_TABLE,FK_REFERENCED_COLUMN,UPDATE_RULE,DELETE_RULE,INDEX_NAME,NON_UNIQUE,INDEX_TYPE,SEQ_IN_INDEX
+bank_reconciliation_items,id,int,NULL,10,0,NO,NULL,auto_increment,YES,NO,NULL,NULL,NULL,NULL,PRIMARY,0,BTREE,1
+bank_reconciliation_items,reconciliation_id,int,NULL,10,0,NO,NULL,,NO,NO,bank_reconciliation,id,RESTRICT,CASCADE,idx_reconciliation,1,BTREE,1
+bank_reconciliation_items,journal_line_id,int,NULL,10,0,YES,NULL,,NO,NO,journal_lines,id,CASCADE,RESTRICT,idx_journal_line,1,BTREE,1
+bank_reconciliation_items,transaction_date,date,NULL,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+bank_reconciliation_items,description,varchar,255,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+bank_reconciliation_items,amount,decimal,NULL,18,2,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+bank_reconciliation_items,type,enum,22,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+bank_reconciliation_items,is_reconciled,tinyint,NULL,3,0,YES,0,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+bank_reconciliation_items,created_at,timestamp,NULL,NULL,NULL,YES,current_timestamp(),,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL

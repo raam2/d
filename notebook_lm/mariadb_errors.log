@@ -1,0 +1,5 @@
+--------------
+DROP DATABASE IF EXISTS gst_notebook_lm
+--------------
+
+ERROR 1044 (42000) at line 2: Access denied for user 'u184420243_gst'@'%' to database 'gst_notebook_lm'

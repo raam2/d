@@ -1,9 +1,38 @@
+
 # GST India Accounting System
-
-A complete double-entry accounting module designed specifically for Indian businesses with GST compliance. This system integrates with existing invoice data and provides comprehensive financial reporting.
-
+simple readable dark UI . vanilla js .
+A complete double-entry accounting module designed specifically for Indian businesses with GST compliance. This system integrates with existing invoice data and provides comprehensive financial reporting. Develop an advanced AI-powered GST accounting billing for gst-registered retail merchant . 
+Core Features:
+create sale bill on base of date range total amount during month/day time , and gst_rates search from internet on base of invoice date selected .
+    GST Compliance - Automated GSTIN validation and tax calculations
+billing- Direct csv export with proper voucher formatting
+    Self-Learning AI - Continuous improvement from user corrections
+AI-OCR reduces manual work by 80%
+GSTIN Errors	Compliance issues, audit problems	Real-time format validation & error detection
+Tax Calculation Mistakes	State-wise computation errors	Intelligent CGST/SGST vs IGST determination
+	No Time-consuming manual entry	Direct csv export with voucher formatting
+Inconsistent Accuracy	Human errors eliminate , processing fatigue	Machine learning improves with each correction
 ## 🎯 Features
+Market Need:
+    Indian businesses process millions of GST invoices monthly
+    Strict GST compliance deadlines require faster processing
+    Manual processes cannot scale with growing invoice volumes
 
+4. TECHNOLOGY STACK-
+  Learning Algorithm: JSON-based pattern storage for continuous improvement
+    GST Validator: Regex patterns for real-time GST rates on hsn validation
+    Tax Calculator: State code logic for automated tax determination
+
+Integration:    Local Storage: Secure client-side data persistence
+Real-World Applications:State-wise Tax Calculation: Automated CGST/SGST vs IGST determination → 100% accuracy.
+Month-end Bulk Processing: 500+ invoices .
+8. IMPLEMENTATION IMPACT
+Industry Transformation:
+    Manual → Automated: Complete elimination of repetitive data entry.
+    Error-Prone → Accurate: AI precision replacing human inconsistency.
+    Reactive → Proactive: Predictive error detection and prevention.
+    Isolated → : Seamless accounting workflow integration.
+    Competitive Advantage - Advanced technology adoption.
 ### 📊 Complete Chart of Accounts
 - Indian accounting standard structure
 - GST-specific accounts (CGST, SGST, IGST Input/Output)
@@ -47,9 +76,13 @@ A complete double-entry accounting module designed specifically for Indian busin
 ## 🚀 Installation & Setup
 
 ### 1. System Requirements
-- PHP 8.0 or higher
-- MySQL 5.7+ or MariaDB 10.3+
-- Apache/Nginx web server
+-no external dependancy . offline single admin user .
+Server version: 10.11.11-MariaDB-0+deb12u1 Debian 12
+PHP 8.2.28 (cli) (built: Mar 13 2025 18:21:38) (NTS)
+Copyright (c) The PHP Group
+Zend Engine v4.2.28, Copyright (c) Zend Technologies
+    with Zend OPcache v8.2.28, Copyright (c), by Zend Technologies
+- Apache web server
 - PDO MySQL extension
 
 ### 2. Database Configuration
@@ -60,209 +93,102 @@ Create or update `con.php` in the project root:
 define('DB_HOST', '127.0.0.1');
 define('DB_PORT', '3306'); 
 define('DB_NAME', 'gst_accounting');
-define('DB_USER', 'your_username');
-define('DB_PASS', 'your_password');
+define('DB_USER', 'gstwork');
+define('DB_PASS', 'gstwork@123');
 ```
-
-### 3. Database Migration
-Run the migration to create accounting tables:
-
-1. Access the application in your browser
-2. Navigate to **Setup Database** or go to `?module=migrate`
-3. Click **Run Migration Now**
-
-This will create:
-- `accounts` - Chart of accounts
-- `journal_entries` - Journal entry headers
-- `journal_lines` - Journal entry details (debits/credits)
-- `bank_reconciliation` - Bank reconciliation records
-- `bank_reconciliation_items` - Reconciliation line items
-- Default Indian chart of accounts with GST structure
-
-### 4. Initial Setup
-1. Go to **Settings** to configure your organization's state code
-2. Review the **Chart of Accounts** and customize as needed
-3. Set up your bank accounts in the chart of accounts
-4. Begin posting invoices or creating manual journal entries
-
-## 📋 Usage Guide
-
-### Dashboard
-The main dashboard provides an overview of:
-- Account statistics by type
-- Recent journal entries
-- Bank reconciliation status
-- Quick action links
-
-### Chart of Accounts Management
-- **View Accounts**: Browse by account type with color coding
-- **Add Account**: Create new accounts with proper codes and hierarchy
-- **Edit Account**: Modify account details and activate/deactivate
-- **Account Linking**: Set up parent-child relationships
-
-### Manual Journal Entries
-1. Select **Manual Journal** from navigation
-2. Enter date, description, and reference
-3. Add journal lines (minimum 2 required)
-4. Ensure debits equal credits (automatic validation)
-5. Submit to post the entry
-
-### Invoice Posting
-1. Go to **Post Invoices** to see unposted invoices
-2. Select invoices to post to accounting
-3. System automatically creates journal entries:
-   - **Debit**: Accounts Receivable (customer owes money)
-   - **Credit**: Sales Revenue (income earned)
-   - **Credit**: GST Output accounts (tax collected)
-
-### Financial Reports
-- **Trial Balance**: Verify all accounts are balanced
-- **Profit & Loss**: View income vs expenses for any period
-- **Balance Sheet**: See financial position at any date
-- **Ledger**: Drill down into individual account transactions
-
-### Bank Reconciliation
-1. Go to **Bank Reconcile** > **New Reconciliation**
-2. Select bank account and statement date
-3. Enter statement balance from your bank
-4. Review outstanding transactions
-5. Mark as reconciled when balanced
 
 ## 🔧 Technical Details
-
+everything ready to work continue with Existing Database at /database/ .
+UPDATE `gst_rate_rules` (or `gst_hsn_rates`), FROM INTERNET AI . GST billing system** to automatically pick the correct GST rate from your database, based on the **invoice date** and the **HSN code**, while respecting the effective date ranges in your `gst_rate_rules` (or `gst_hsn_rates`).
 ### Database Schema
-The system creates additional tables alongside existing ones:
+use existing ones:
 
 **Existing Tables** (used as-is):
-- `invoices` - Sales invoice headers
-- `invoice_items` - Sales invoice line items  
-- `parties` - Customer/vendor master data
-
-**New Accounting Tables**:
-- `accounts` - Chart of accounts structure
-- `journal_entries` - Double-entry journal headers
-- `journal_lines` - Individual debit/credit lines
-- `bank_reconciliation` - Bank reconciliation records
-
-### GST Logic
-```php
-// Intra-state (same state): CGST + SGST
-if ($supplier_state === $customer_state) {
-    $cgst = $gst_amount / 2;
-    $sgst = $gst_amount / 2;
-    $igst = 0;
-}
-// Inter-state (different states): IGST
-else {
-    $cgst = 0;
-    $sgst = 0; 
-    $igst = $gst_amount;
-}
-```
-
-### Module Structure
-```
-├── index.php              # Main application entry point
-├── lib/
-│   ├── database.php       # Database connection
-│   └── accounting.php     # Core accounting functions
-├── modules/
-│   ├── dashboard.php      # Main dashboard
-│   ├── chart_of_accounts.php # COA management
-│   ├── journal_new.php    # Manual journal entry
-│   ├── ledger.php         # Account ledgers
-│   ├── trial_balance.php  # Trial balance report
-│   ├── pl.php            # Profit & Loss statement
-│   ├── balance_sheet.php  # Balance sheet
-│   ├── post_invoices.php  # Invoice posting
-│   └── reconcile.php     # Bank reconciliation
-├── actions/
-│   └── migrate.php       # Database migration
-└── con.php               # Database configuration
-```
-
-## 🛠️ Customization
-
-### Adding New Account Types
-1. Go to **Chart of Accounts** > **Add New Account**
-2. Choose appropriate account type and parent
-3. Use standard account coding (e.g., 1000-1999 for Assets)
-
-### Custom Reports
-The accounting library provides functions to build custom reports:
-- `get_account_balance($code, $date)` - Get balance for any account
-- `get_trial_balance($date)` - Get trial balance data
-- `get_account_ledger($code, $from, $to)` - Get ledger transactions
-
-### Integration with Existing Systems
-The system is designed to work alongside existing invoice/inventory systems:
-- Reads from existing `invoices` and `invoice_items` tables
-- Creates journal entries without modifying invoice data
-- Maintains referential integrity through `source_type` and `source_id`
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Failed**
-   - Check `con.php` database credentials
-   - Ensure MySQL/MariaDB service is running
-   - Verify database exists and user has permissions
-
-2. **Trial Balance Not Balanced**
-   - Review recent journal entries for errors
-   - Check for incomplete transactions
-   - Use the journal entry edit feature to correct
-
-3. **Invoice Posting Errors**
-   - Ensure Chart of Accounts is properly set up
-   - Check that required accounts exist (1100-AR, 4100-Sales, GST accounts)
-   - Verify invoice data integrity
-
-4. **Migration Errors**
-   - Check database user has CREATE TABLE permissions
-   - Ensure sufficient disk space
-   - Review error logs for specific issues
-
-### Performance Optimization
-- Index on `account_code` and `entry_date` for faster queries
-- Regular database maintenance and optimization
-- Archive old transactions if needed
-- Use date ranges in reports for large datasets
-
-## 📚 Accounting Concepts
-
-### Double-Entry Bookkeeping
-Every transaction affects at least two accounts with equal debits and credits:
-- **Assets & Expenses**: Increase with debits, decrease with credits
-- **Liabilities, Equity & Income**: Increase with credits, decrease with debits
-
-### Account Types
-- **Assets (1000-1999)**: Resources owned (cash, inventory, equipment)
-- **Liabilities (2000-2999)**: Amounts owed (loans, accounts payable)
-- **Equity (3000-3999)**: Owner's investment and retained earnings
-- **Income (4000-4999)**: Revenue earned from sales/services
-- **Expenses (5000-6999)**: Costs incurred to generate revenue
-
-### GST Compliance
-- **Input GST**: Tax paid on purchases (asset accounts)
-- **Output GST**: Tax collected on sales (liability accounts)
-- **CGST**: Central GST (intra-state transactions)
-- **SGST**: State GST (intra-state transactions)  
-- **IGST**: Integrated GST (inter-state transactions)
-
-## 📞 Support
-
-For technical support or customization requests:
-1. Check this documentation first
-2. Review the source code comments
-3. Test in a development environment before production use
-4. Backup your database before major changes
-
-## 📄 License
-
-This accounting module is designed for integration with existing GST invoice systems. Modify and extend as needed for your business requirements.
+## 🗂 Database Tables Involved
+- **`gst_rate_rules`**
+  - `hsn_start`, `hsn_end` → HSN range
+  - `intra_rate_percent`, `inter_rate_percent`
+  - `effective_from`, `effective_to`
+- **`gst_hsn_rates`**
+  - Simple HSN → GST rate mapping (fallback if no rules exist)
 
 ---
 
-**GST India Accounting System** - Complete double-entry accounting for Indian businesses with GST compliance.
+## 🔑 PDO Query Logic
+
+### Step 1: Fetch GST Rate by HSN + Invoice Date
+```php
+function getGstRate(PDO $pdo, string $hsn, string $invoiceDate, string $supplyState, string $orgState): ?array {
+    // First try gst_rate_rules with date range
+    $sql = "
+        SELECT intra_rate_percent, inter_rate_percent
+        FROM gst_rate_rules
+        WHERE :hsn BETWEEN hsn_start AND hsn_end
+          AND :invoiceDate BETWEEN effective_from AND IFNULL(effective_to, :invoiceDate)
+        ORDER BY priority ASC
+        LIMIT 1
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        'hsn' => $hsn,
+        'invoiceDate' => $invoiceDate
+    ]);
+    $rule = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($rule) {
+        // Decide intra vs inter based on state
+        if ($supplyState === $orgState) {
+            return ['cgst' => $rule['intra_rate_percent']/2,
+                    'sgst' => $rule['intra_rate_percent']/2,
+                    'igst' => 0];
+        } else {
+            return ['cgst' => 0,
+                    'sgst' => 0,
+                    'igst' => $rule['inter_rate_percent']];
+        }
+    }
+
+    // Fallback: gst_hsn_rates
+    $sql = "SELECT gst_rate FROM gst_hsn_rates WHERE hsn = :hsn LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['hsn' => $hsn]);
+    $rate = $stmt->fetchColumn();
+
+    if ($rate) {
+        if ($supplyState === $orgState) {
+            return ['cgst' => $rate/2, 'sgst' => $rate/2, 'igst' => 0];
+        } else {
+            return ['cgst' => 0, 'sgst' => 0, 'igst' => $rate];
+        }
+    }
+
+    return null; // No rate found
+}
+```
+
+---
+
+## 🔄 Usage Example
+```php
+$gst = getGstRate(
+    $pdo,
+    '30049011',          // HSN code
+    '2025-09-23',        // Invoice date
+    'UK',                // Supply state
+    'UK'                 // Organization state
+);
+
+---
+
+## ✅ Key Features of This Approach
+- **Date‑sensitive**: Picks the correct rate valid on the invoice date.
+- **HSN‑aware**: Matches exact HSN or range.
+- **State‑aware**: Auto‑splits into CGST/SGST vs IGST.
+- **Fallback**: Uses `gst_hsn_rates` if no rule is found.
+- **Priority**: Honors `priority` column in `gst_rate_rules`.
+
+---
+### Module Structure
+This accounting module is designed for integration with existing GST invoice systems. Modify and extend . As needed for your business requirements.
+---
+**GST India Accounting System** - Complete double-entry AI-LOGIC accounting for Indian businesses with GST compliance.

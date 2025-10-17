@@ -1,0 +1,2 @@
+int,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar,varchar
+id,HSN_code,Received_Qty,mrp,Batch_No,Mfg_date,GST_Perc,Supplier_Name,Item_name,Hindi_Name,Item_Net_Amount,cgstrate,sgstrate,igstrate

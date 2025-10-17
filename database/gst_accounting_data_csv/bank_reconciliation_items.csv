@@ -1,0 +1,2 @@
+int,int,int,date,varchar,decimal,enum,tinyint,timestamp
+id,reconciliation_id,journal_line_id,transaction_date,description,amount,type,is_reconciled,created_at

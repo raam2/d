@@ -1,0 +1,2 @@
+int,int,date,decimal,enum,varchar
+id,party_id,pay_date,amount,mode,ref_no

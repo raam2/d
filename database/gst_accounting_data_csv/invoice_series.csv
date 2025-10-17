@@ -1,0 +1,10 @@
+int,varchar,varchar,varchar,int,tinyint
+id,inv_type,series_code,prefix,current_no,is_active
+1,sales,SSC,SSC-,0,1
+2,sales,MSWP,MSWP-,0,1
+3,sales,B2B,B2B-,0,1
+4,purchase,URD,URD-,23,1
+25,purchase,URD-2025,URD-2025-,23,1
+26,sale,SAL-2025,SAL-2025-,1,1
+27,sale,SSC-2025,SSC-2025-,50,1
+28,sales,B2B-2025,B2B-2025-,23,1

@@ -1,0 +1,26 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,CHARACTER_MAX_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,IS_PRIMARY_KEY,IS_UNIQUE,FK_REFERENCED_TABLE,FK_REFERENCED_COLUMN,UPDATE_RULE,DELETE_RULE,INDEX_NAME,NON_UNIQUE,INDEX_TYPE,SEQ_IN_INDEX
+purchase_invoice_staging_reverse,id,int,NULL,10,0,NO,NULL,auto_increment,YES,NO,NULL,NULL,NULL,NULL,PRIMARY,0,BTREE,1
+purchase_invoice_staging_reverse,item_name,varchar,255,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_staging_item_name,1,BTREE,1
+purchase_invoice_staging_reverse,hindi_name,varchar,255,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,exp_date,date,NULL,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,invoice_date,date,NULL,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_staging_invoice_date,1,BTREE,1
+purchase_invoice_staging_reverse,mfg_date,date,NULL,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,quantity,decimal,NULL,10,3,NO,1.000,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,invoice_no,varchar,50,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_staging_invoice_no,1,BTREE,1
+purchase_invoice_staging_reverse,batch_no,varchar,50,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,supplier_gstin,varchar,15,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,hsn_code,varchar,10,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,supplier_name,varchar,255,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_staging_supplier,1,BTREE,1
+purchase_invoice_staging_reverse,data_source,varchar,50,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,item_net_amount_gross,decimal,NULL,12,2,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,cgst_rate,decimal,NULL,5,2,NO,0.00,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,sgst_rate,decimal,NULL,5,2,NO,0.00,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,igst_rate,decimal,NULL,5,2,NO,0.00,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,total_gst_rate,decimal,NULL,5,2,NO,0.00,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_taxable_amount,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_rate,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_cgst_amount,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_sgst_amount,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_igst_amount,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,calculated_line_total,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+purchase_invoice_staging_reverse,amount_difference,decimal,NULL,12,2,YES,NULL,STORED GENERATED,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL

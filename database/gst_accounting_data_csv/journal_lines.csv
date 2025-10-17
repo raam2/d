@@ -1,0 +1,11 @@
+int,int,enum,int,varchar,decimal,decimal
+id,entry_id,account_type,party_id,account_code,debit_amount,credit_amount
+1,1,ledger,3008,NULL,2383.40,0.00
+2,2,ledger,3008,NULL,453.00,0.00
+3,3,ledger,3008,NULL,1155.00,0.00
+4,4,ledger,3008,NULL,3344.00,0.00
+5,5,ledger,3008,NULL,1510.00,0.00
+6,6,ledger,3008,NULL,1769.00,0.00
+7,7,ledger,3008,NULL,345.00,0.00
+8,8,ledger,3008,NULL,270.00,0.00
+9,9,ledger,3008,NULL,50.00,0.00

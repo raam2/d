@@ -1,0 +1,3 @@
+int,varchar,varchar,varchar,text,timestamp,timestamp
+id,org_name,org_state_code,org_gstin,org_address,created_at,updated_at
+1,My Organization,DL,07AAAAA0000A1Z5,NULL,2025-09-22 20:02:00,2025-09-22 20:02:00

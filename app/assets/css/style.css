@@ -1,7 +1,0 @@
-body{margin:0;font-family:system-ui,Arial,sans-serif;background:#101010;color:#e6e6e6;}
-.app-header{background:#181818;padding:.8rem 1rem;display:flex;flex-wrap:wrap;align-items:center;gap:1rem;}
-.app-header h1{margin:0;font-size:1.1rem;font-weight:500;}
-.app-header nav a{color:#4fb3ff;text-decoration:none;margin-right:.75rem;font-size:.9rem;}
-.app-header nav a:hover{text-decoration:underline;}
-#app-main{padding:1rem;}
-code{background:#222;padding:2px 5px;border-radius:3px;}

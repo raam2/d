@@ -1,0 +1,2 @@
+int,varchar,date,varchar,timestamp
+id,voucher_no,voucher_date,narration,created_at

@@ -1,0 +1,11 @@
+int,int,varchar,varchar,varchar,varchar,enum,decimal,decimal,decimal,date,date,varchar
+id,priority,hsn_chapter,hsn_start,hsn_end,description,condition_type,threshold_value,intra_rate_percent,inter_rate_percent,effective_from,effective_to,notification_ref
+1,10,61,NULL,NULL,Apparel (knitted) ≤ ₹1000/pcs,VALUE_PER_PCS_LE,1000.00,5.00,5.00,2025-04-01,NULL,CBIC
+2,10,62,NULL,NULL,Apparel (not knitted) ≤ ₹1000/pcs,VALUE_PER_PCS_LE,1000.00,5.00,5.00,2025-04-01,NULL,CBIC
+3,11,61,NULL,NULL,Apparel (knitted) > ₹1000/pcs,NONE,NULL,12.00,12.00,2025-04-01,NULL,CBIC
+4,11,62,NULL,NULL,Apparel (not knitted) > ₹1000/pcs,NONE,NULL,12.00,12.00,2025-04-01,NULL,CBIC
+5,12,6501,NULL,NULL,Headgear ≤ ₹1000/pcs,VALUE_PER_PCS_LE,1000.00,5.00,5.00,2025-04-01,NULL,CBIC
+6,12,6505,NULL,NULL,Headgear ≤ ₹1000/pcs,VALUE_PER_PCS_LE,1000.00,5.00,5.00,2025-04-01,NULL,CBIC
+7,13,6501,NULL,NULL,Headgear > ₹1000/pcs,NONE,NULL,12.00,12.00,2025-04-01,NULL,CBIC
+8,13,6505,NULL,NULL,Headgear > ₹1000/pcs,NONE,NULL,12.00,12.00,2025-04-01,NULL,CBIC
+9,20,10,NULL,NULL,Cereals – pre-packaged & labelled,PREPACKED_LABELLED,NULL,5.00,5.00,2025-04-01,NULL,2022-07-18

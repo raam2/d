@@ -1,0 +1,5 @@
+mariadb --user=root --default-character-set=utf8mb4 gst_app_github_copilot <<'EOF'
+SET FOREIGN_KEY_CHECKS=0;
+SOURCE /var/www/html/bharat_accounting/github_copilot/gst_accounting_raw.sql;
+SET FOREIGN_KEY_CHECKS=1;
+EOF

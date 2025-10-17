@@ -1,0 +1,16 @@
+--------------
+CREATE DEFINER=`gstwork`@`localhost` FUNCTION `HasChildren`(record_id INT) RETURNS tinyint(1)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE child_count INT DEFAULT 0;
+    
+    SELECT COUNT(*) INTO child_count 
+    FROM hierarchical_records 
+    WHERE parent_id = record_id AND status = 'active';
+    
+    RETURN child_count > 0;
+END
+--------------
+
+ERROR 1227 (42000) at line 8314: Access denied; you need (at least one of) the SET USER privilege(s) for this operation

@@ -1,0 +1,2 @@
+int,int,date,varchar,decimal,decimal,decimal,varchar,tinyint,int,timestamp
+id,statement_id,transaction_date,description,debit_amount,credit_amount,balance,reference_no,is_reconciled,journal_entry_id,created_at

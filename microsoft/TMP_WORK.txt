@@ -1,0 +1,138 @@
+ lxc exec boss-lxc-server -- bash
+ lxc exec boss-lxc-server --user $(id -u mukund) -- bash
+
+ Use root via socket (no -h, no -P) Just rely on socket auth:
+
+
+gst_accounting_MICROSOFT
+DROP DATABASE IF EXISTS gst_accounting_MICROSOFT  ;
+1. Create the database
+CREATE DATABASE gst_accounting_MICROSOFT
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+  
+  GRANT ALL PRIVILEGES ON gst_accounting_MICROSOFT.* TO 'gstwork'@'localhost';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'gstwork'@'localhost';
+  
+mariadb --default-character-set=utf8mb4 gst_accounting_MICROSOFT > /var/www/html/bharat_accounting/microsoft/gst_accounting_clean.sql
+
+mariadb --user=root --default-character-set=utf8mb4 gst_accounting_MICROSOFT < /var/www/html/bharat_accounting/microsoft/gst_accounting_clean.sql
+
+sed -E 's/,calculated_taxable_amount//g; s/,[0-9]+\.[0-9]+)//g' gst_accounting_clean.sql > gst_accounting_clean_fixed.sql
+sed -E 's/`calculated_taxable_amount`,?//g' gst_accounting_clean.sql \
+| sed -E 's/,[[:space:]]*[0-9]+(\.[0-9]+)?([,)])/\2/g' \
+> gst_accounting_clean_fixed.sql
+
+
+SELECT TABLE_NAME, COLUMN_NAME
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA='gst_accounting_MICROSOFT'
+  AND EXTRA LIKE '%GENERATED%';
+
+mysql -e"use gst_accounting_MICROSOFT;
+show tables;"
+--code from file :
+mysql --default-character-set=utf8mb4 -u gstwork -p'gstwork@123' -h 127.0.0.1 -P 3306 -D gst_accounting_MICROSOFT < /var/www/html/bharat_accounting/microsoft/seed.sql
+
+mysql --default-character-set=utf8mb4 -u gstwork -p'gstwork@123' -h 127.0.0.1 -P 3306 -D gst_accounting_MICROSOFT -e"
+select * from Pages; 
+"
+Yes — separate tables is the correct DBMS‑aligned approach. DO NOT violates GOOD DBMS normalization rules.
+
+Apache/2.4.65 (Debian) Server at 10.160.118.61 Port 80
+
+I THINK YOU MUST ASK SOME QUESTIONS TO KNOW MY EXACT WORK-IN-PROGRESS TO GIVE EXACT CORRECT ANSWER FLOW . PREVIOUSLY I MISSED SOME CODES DUE TO DOUBTS .
+
+CONSIDER AN EXAMPLE .. There are are 2 tables . 'invoices' , 'invoiced_products' .
+'invoices' - have invoice total (a formula that automatically calculates from 'invoiced_products'(that have prices and quantity ). DO YOU KNOW ANY SUCH REFERENCIAL FORMULA THAT AUTOMATICALLY GIVE UPDATED RESULT WITHOUT ANY JOIN QUERY EVERYTIME ?
+
+work Page (real schema) only . If you forget then ask ? everytime but no error-accepted .
+
+mysql --default-character-set=utf8mb4 -u gstwork -p'gstwork@123' -h 127.0.0.1 -P 3306 -D gst_accounting_MICROSOFT -e "
+show tables;"
+
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema = 'gst_accounting'
+  AND table_name = 'invoices';
+
+
+mysql --default-character-set=utf8mb4 -u gstwork -p'gstwork@123' -h 127.0.0.1 -P 3306 -D gst_accounting_MICROSOFT -e "
+SELECT DATE_FORMAT(i.invoicedate, '%Y-%m') AS period,
+       SUM(it.taxableamount) AS taxablevalue,
+       SUM(it.cgstamount) AS cgsttotal,
+       SUM(it.sgstamount) AS sgsttotal,
+       SUM(it.igstamount) AS igsttotal,
+       SUM(it.linetotal) AS grandtotal
+FROM invoices i 
+JOIN invoiceitems it ON i.id = it.invoiceid 
+WHERE i.status != 'cancelled' 
+  AND i.invtype = 'purchase' 
+  AND DATE_FORMAT(i.invoicedate, '%Y-%m') = '2025-04'
+
+"
+
+#!/bin/bash
+
+DB="gst_accounting"
+USER="gstwork"
+PASS="gstwork@123"
+HOST="127.0.0.1"
+PORT="3306"
+
+# Output directories
+CLEAN_DIR="/var/www/html/bharat_accounting/database/clean_sql_data"
+MIGRABLE_DIR="/var/www/html/bharat_accounting/database/migrable_sql_data"
+
+# Ensure directories exist
+mkdir -p "$CLEAN_DIR" "$MIGRABLE_DIR"
+
+# Combined files
+CLEAN_ALL="$CLEAN_DIR/all_tables.sql"
+MIGRABLE_ALL="$MIGRABLE_DIR/all_tables.sql"
+
+# Reset combined files
+> "$CLEAN_ALL"
+> "$MIGRABLE_ALL"
+
+# Get all tables
+tables=$(mysql -u $USER -p$PASS -h $HOST -P $PORT -N -e "SHOW TABLES FROM $DB;")
+
+for t in $tables; do
+  echo "Exporting $t..."
+
+  # Clean schema (minimal, no wrappers, no triggers)
+  mysqldump -u $USER -p$PASS -h $HOST -P $PORT \
+      --skip-comments \
+    --skip-set-charset \
+    --compact \
+    $DB $t > "$CLEAN_DIR/$t.sql"
+
+  # Append to combined clean schema
+  cat "$CLEAN_DIR/$t.sql" >> "$CLEAN_ALL"
+  echo -e "\n" >> "$CLEAN_ALL"
+
+  # Migrable schema (full dump with wrappers, triggers, etc.)
+  mysqldump -u $USER -p$PASS -h $HOST -P $PORT \
+       --routines \
+    --triggers \
+    $DB $t > "$MIGRABLE_DIR/$t.sql"
+
+  # Append to combined migrable schema
+  cat "$MIGRABLE_DIR/$t.sql" >> "$MIGRABLE_ALL"
+  echo -e "\n" >> "$MIGRABLE_ALL"
+done
+
+echo "✅ Export complete."
+echo "Clean data: $CLEAN_DIR (per-table + all_tables.sql)"
+echo "Migrable data: $MIGRABLE_DIR (per-table + all_tables.sql)"
+
+
+-------------------+-------------------+--------------+
+| cgst_rate | sgst_rate | igst_rate | total_taxable_amount | total_cgst_amount | total_sgst_amount | total_igst_amount | total_amount |
++-----------+-----------+-----------+----------------------+-------------------+-------------------+-------------------+--------------+
+|      2.50 |      2.50 |      0.00 |             35854.01 |            896.39 |            896.39 |              0.00 |     37646.79 |
+|      6.00 |      6.00 |      0.00 |             45692.70 |           2741.56 |           2741.56 |              0.00 |     51175.82 |
+|      9.00 |      9.00 |      0.00 |             16965.94 |           1526.90 |           1526.90 |              0.00 |     20019.74 |
++-----------+-----------+-----------+----------------------+-------------------+

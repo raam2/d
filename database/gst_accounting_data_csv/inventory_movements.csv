@@ -1,0 +1,2 @@
+int,int,enum,date,decimal,decimal,decimal,varchar,int,text,timestamp
+id,item_id,movement_type,movement_date,qty,unit_cost,total_cost,source_type,source_id,notes,created_at

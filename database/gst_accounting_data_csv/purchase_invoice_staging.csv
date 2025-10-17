@@ -1,0 +1,2 @@
+int,varchar,varchar,date,date,date,decimal,decimal,varchar,decimal,varchar,decimal,varchar,decimal,varchar,decimal,decimal,decimal,varchar,varchar
+id,item_name,hindi_name,exp_date,invoice_date,mfg_date,quantity,sgst_rate,invoice_no,cgst_rate,batch_no,taxable_amount,supplier_gstin,total_gst_rate,hsn_code,igst_rate,mrp,igst_amount,supplier_name,data_source

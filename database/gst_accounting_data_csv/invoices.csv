@@ -1,0 +1,11 @@
+int,int,enum,varchar,int,varchar,varchar,varchar,date,varchar,tinyint,enum,tinyint
+id,party_id,inv_type,series_code,seq_no,invoice_no,external_sales_ref_no,external_supplier_invoice_no,invoice_date,place_of_supply,reverse_charge,status,itc_eligible
+1,4,purchase,URD,1,URD-2024-001.0,NULL,NULL,2024-12-01,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+2,4,purchase,URD,4,URD-2024-004.0,NULL,NULL,2024-12-02,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+3,4,purchase,URD,5,URD-2024-005.0,NULL,NULL,2024-12-03,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+4,4,purchase,URD,7,URD-2024-007.0,NULL,NULL,2024-12-04,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+5,4,purchase,URD,10,URD-2024-010.0,NULL,NULL,2024-12-05,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+6,4,purchase,URD,12,URD-2024-012.0,NULL,NULL,2024-12-06,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+7,4,purchase,URD,14,URD-2024-014.0,NULL,NULL,2024-12-07,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+8,4,purchase,URD,16,URD-2024-016.0,NULL,NULL,2024-12-08,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0
+9,4,purchase,URD,18,URD-2024-018.0,NULL,NULL,2024-12-09,BHIMTAL -PIN 263136 .UTTARAKHAND,0,final,0

@@ -1,0 +1,13 @@
+root@boss-lxc-server:~# mariadb-dump --no-data --skip-comments --skip-definer gst_accounting \
+  | sed -E 's/ AUTO_INCREMENT=[0-9]+//g' > /var/www/html/bharat_accounting/microsoft/db1_gst_accounting_schema.sql
+
+mariadb-dump --no-data --skip-comments --skip-definer gst_accounting_MICROSOFT \
+  | sed -E 's/ AUTO_INCREMENT=[0-9]+//g' > /var/www/html/bharat_accounting/microsoft/db2_gst_accounting_MICROSOFT_schema.sql
+
+diff -u /var/www/html/bharat_accounting/microsoft/db1_gst_accounting_schema.sql /var/www/html/bharat_accounting/microsoft/db2_gst_accounting_MICROSOFT_schema.sql
+Strips AUTO_INCREMENT and boilerplate so only real schema differences show.
+mariadb-dump: unknown option '--skip-definer'
+mariadb-dump: unknown option '--skip-definer'
+bash: Strips: command not found
+root@boss-lxc-server:~# 
+

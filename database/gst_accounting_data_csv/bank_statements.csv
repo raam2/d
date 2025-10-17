@@ -1,0 +1,2 @@
+int,varchar,date,decimal,decimal,decimal,decimal,enum,timestamp
+id,account_code,statement_date,opening_balance,closing_balance,total_credits,total_debits,status,created_at

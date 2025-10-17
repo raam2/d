@@ -1,0 +1,4 @@
+int,varchar,varchar,tinyint
+id,username,password_hash,is_active
+1,admin,$2y$10$REPLACEWITHGENERATEDHASH,1
+2,gstwork,$2y$10$bHpwtMFTzJvGmGPUuecOM.dAPxZMsshofhr4oLETD5Z3GYzqUpRxW,1

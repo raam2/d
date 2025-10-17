@@ -1,0 +1,6 @@
+int,varchar,varchar,varchar,varchar,enum
+id,label,name,gstin,city,party_type
+3001,CASH / RETAIL CUSTOMER - BHIMTAL - PIN 263136,CASH / RETAIL CUSTOMER,NULL,BHIMTAL - PIN 263136,customer
+3005,PATANJALI_SSC_card_wallet - BHIMTAL,PATANJALI_SSC_card_wallet,NULL,BHIMTAL,both
+3007,MSWIPE_machine_wallet - BHIMTAL,MSWIPE_machine_wallet,NULL,BHIMTAL,both
+3008,INDIAN_BANK_MAIN - BHIMTAL,INDIAN_BANK_MAIN,NULL,BHIMTAL,both

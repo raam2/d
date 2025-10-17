@@ -1,0 +1,41 @@
+ lxc exec boss-lxc-server -- bash
+ lxc exec boss-lxc-server --user $(id -u mukund) -- bash
+/var/www/html/bharat_accounting/notebook_lm/		/var/www/html/bharat_accounting/database/
+
+mariadb --default-character-set=utf8mb4 -u gstwork -p'gstwork@123' -h localhost -P 3306 gst_notebook_lm < /var/www/html/bharat_accounting/notebook_lm/update.sql
+  
+  mariadb -N -B -u root gst_accounting -e "CALL export_portable('gst_accounting');" \
+  > /var/www/html/bharat_accounting/notebook_lm/gst_accounting_data.sql
+
+	mariadb -e"	use gst_notebook_lm  ;	
+	SHOW CREATE TABLE invoices\G;
+	"
+
+mariadb --user=root --default-character-set=utf8mb4 gst_notebook_lm <<'EOF' \
+  >/var/www/html/bharat_accounting/notebook_lm/mariadb_output.log \
+  2>/var/www/html/bharat_accounting/notebook_lm/mariadb_errors.log
+
+-- Save old settings
+SET @OLD_SQL_MODE := @@sql_mode;
+SET @OLD_FOREIGN_KEY_CHECKS := @@FOREIGN_KEY_CHECKS;
+SET @OLD_UNIQUE_CHECKS := @@UNIQUE_CHECKS;
+SET @OLD_TIME_ZONE := @@TIME_ZONE;
+
+-- Apply relaxed settings
+SET sql_mode='';
+SET FOREIGN_KEY_CHECKS=0;
+SET UNIQUE_CHECKS=0;
+SET TIME_ZONE='+00:00';
+SET NAMES utf8mb4;
+
+-- Import data
+SOURCE /var/www/html/bharat_accounting/notebook_lm/gst_accounting_data.sql;
+
+-- Restore settings
+SET sql_mode=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+SET TIME_ZONE=@OLD_TIME_ZONE;
+
+EOF
+

@@ -1,0 +1,11 @@
+accounts_ibfk_1	accounts	parent_code	accounts	code	CASCADE	RESTRICT
+bank_reconciliation_ibfk_1	bank_reconciliation	bank_account_code	accounts	code	CASCADE	RESTRICT
+bank_reconciliation_items_ibfk_1	bank_reconciliation_items	reconciliation_id	bank_reconciliation	id	RESTRICT	CASCADE
+bank_reconciliation_items_ibfk_2	bank_reconciliation_items	journal_line_id	journal_lines	id	CASCADE	RESTRICT
+bank_statement_lines_ibfk_1	bank_statement_lines	statement_id	bank_statements	id	RESTRICT	CASCADE
+fk_newinv_party	invoices	party_id	parties	id	RESTRICT	RESTRICT
+fk_newiitems_inv	invoice_items	invoice_id	invoices	id	RESTRICT	CASCADE
+fk_newiitems_item	invoice_items	item_id	items	id	RESTRICT	RESTRICT
+fk_journal_line_entry	journal_lines	entry_id	journal_entries	id	RESTRICT	CASCADE
+journal_lines_ibfk_1	journal_lines	entry_id	journal_entries	id	RESTRICT	CASCADE
+fk_pay_party	payments	party_id	parties	id	RESTRICT	RESTRICT

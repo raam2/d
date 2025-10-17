@@ -1,0 +1,2 @@
+int,varchar,date,decimal,decimal,decimal,enum,timestamp,varchar,timestamp
+id,bank_account_code,statement_date,statement_balance,book_balance,reconciled_balance,status,reconciled_at,reconciled_by,created_at

@@ -1,0 +1,6 @@
+tinyint,varchar,varchar
+id,code,name
+1,PCS,Pieces
+2,KG,Kilograms
+3,LTR,Litres
+4,MTR,Metres

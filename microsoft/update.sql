@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS Pages;
+
+CREATE TABLE Pages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(200) UNIQUE NOT NULL,
+  menu_label VARCHAR(200),
+  menu_group VARCHAR(100),
+  menu_order INT,
+  renderer JSON NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

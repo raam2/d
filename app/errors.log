@@ -1,0 +1,78 @@
+--------------
+CREATE TRIGGER trg_invoice_lines_bi BEFORE INSERT ON transactions_invoice_lines
+FOR EACH ROW
+BEGIN
+    DECLARE total_rate DECIMAL(5,2)
+--------------
+
+ERROR 1064 (42000) at line 190 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 4
+--------------
+IF NEW.description_hi REGEXP '^[[:digit:][:space:][:punct:]]+$' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invoice line description cannot be purely numeric/dated'
+--------------
+
+ERROR 1064 (42000) at line 194 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '' at line 3
+--------------
+END IF
+--------------
+
+ERROR 1064 (42000) at line 197 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'END IF' at line 1
+--------------
+SELECT gst_slab INTO total_rate
+    FROM reference_hsn_codes
+    WHERE id = NEW.hsn_id
+      AND is_active = 1
+      AND (effective_to IS NULL OR effective_to >= CURRENT_DATE())
+      AND effective_from <= CURRENT_DATE()
+--------------
+
+ERROR 1327 (42000) at line 198 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': Undeclared variable: total_rate
+--------------
+IF total_rate IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'HSN not active for current date'
+--------------
+
+ERROR 1327 (42000) at line 204 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': Undeclared variable: total_rate
+--------------
+END IF
+--------------
+
+ERROR 1064 (42000) at line 207 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'END IF' at line 1
+--------------
+END
+--------------
+
+ERROR 1064 (42000) at line 208 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'END' at line 1
+--------------
+CREATE OR REPLACE VIEW transactions_v_invoice_line_validation AS
+SELECT
+    l.id AS line_id,
+    i.invoice_number,
+    i.invoice_date,
+    h.hsn_code,
+    h.description,
+    l.description_hi AS line_description,
+    l.gst_slab,
+    l.cgst_rate,
+    l.sgst_rate,
+    l.igst_rate,
+    CASE
+        WHEN l.cgst_rate + l.sgst_rate <> h.gst_slab AND l.igst_rate = 0 THEN 'RATE_MISMATCH_CGST_SGST'
+        WHEN l.igst_rate <> h.gst_slab AND l.igst_rate > 0 THEN 'RATE_MISMATCH_IGST'
+        ELSE 'OK'
+    END AS compliance_status
+FROM transactions_invoice_lines l
+JOIN transactions_invoices i ON i.id = l.invoice_id
+JOIN reference_hsn_codes h ON h.id = l.hsn_id
+--------------
+
+ERROR 1054 (42S22) at line 312 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': Unknown column 'l.gst_slab' in 'SELECT'
+--------------
+CREATE OR REPLACE VIEW app_v_invoice_compliance AS
+SELECT *
+FROM gst_records.transactions_v_invoice_line_validation
+--------------
+
+ERROR 1146 (42S02) at line 423 in file: '/var/www/html/bharat_accounting/app/sql/gst_compliant_schema.sql': Table 'gst_records.transactions_v_invoice_line_validation' doesn't exist

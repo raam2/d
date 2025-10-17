@@ -1,0 +1,52 @@
+Version: 1
+summary: >-
+  Database-driven PHP accounting app: single entry point, all UI lives in SQL metadata,
+  dark theme, zero external dependencies, memory efficient.
+goals:
+  - Keep the web application logic, templates, and UI definitions inside the database metadata tables.
+  - Maintain a single lightweight PHP entry point (`main_entry.php`) plus minimal config/bootstrapping files.
+  - Preserve the dark theme visual design and avoid heavy frameworks or external assets.
+  - Ensure MariaDB/MySQL compatibility for both local (MariaDB) and Hostinger (MySQL) deployments.
+constraints:
+  - Do not create new MVC directories or scatter PHP/JS/CSS files outside the database.
+  - Avoid third-party packages, CDNs, Node/NPM pipelines, or heavyweight build steps.
+  - All SQL changes must be idempotent and safe to run multiple times where possible.
+stack:
+  languages:
+    - php
+    - sql
+  databases:
+    - mariadb
+    - mysql
+key_files:
+  - path: main_entry.php
+    note: The single entry point that reads metadata from the DB and renders pages.
+  - path: config.php
+    note: Environment configuration selecting local MariaDB vs Hostinger MySQL.
+  - path: db.php
+    note: PDO bootstrap that all code should reuse.
+  - path: u184420243_jayanti_enter4.sql
+    note: Canonical schema and data seed containing both accounting data and app metadata.
+  - path: app_build.md
+    note: Architectural blueprint and UX requirements.
+  - path: plan_implementation.md
+    note: Detailed schema and metadata definitions for forms, lists, and actions.
+workflow:
+  default:
+    steps:
+      - Understand the relevant portion of `app_build.md` and `plan_implementation.md` before coding.
+      - Update the SQL schema (preferably via migrations appended to `u184420243_jayanti_enter4.sql`) to store new pages/components.
+      - When adding UI, insert/update rows in `app_pages`/`app_components` rather than creating PHP templates.
+      - Keep PHP entry point changes minimal; prefer SQL metadata adjustments over PHP edits.
+      - After schema edits, run `mysql` import locally (if feasible) or verify syntax via linting commands.
+quality_checks:
+  - description: Dry-run SQL for syntax
+    command: |-
+      mysql --host=127.0.0.1 --port=3306 --user=$DB_USER --password=$DB_PASS --database=$DB_NAME < u184420243_jayanti_enter4.sql
+  - description: PHP lint (if PHP files changed)
+    command: |-
+      php -l main_entry.php
+notes:
+  - Keep responses concise and task-focused; cite assumptions explicitly.
+  - Prefer incremental SQL insert/update scripts rather than re-exporting full dumps when possible.
+  - Ensure all metadata rows include JSON configs that match the renderer's expectations (columns, form fields, etc.).

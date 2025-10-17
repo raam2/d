@@ -1,0 +1,2 @@
+varchar,date,varchar,varchar,varchar,decimal,decimal,decimal,decimal,varchar
+invoice_no,invoice_date,supplier,item_desc,hsn,qty_received,net_value,gst_percent,rate_calc,source_file

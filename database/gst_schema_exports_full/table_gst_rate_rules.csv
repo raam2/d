@@ -1,0 +1,17 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,CHARACTER_MAX_LENGTH,NUMERIC_PRECISION,NUMERIC_SCALE,IS_NULLABLE,COLUMN_DEFAULT,EXTRA,IS_PRIMARY_KEY,IS_UNIQUE,FK_REFERENCED_TABLE,FK_REFERENCED_COLUMN,UPDATE_RULE,DELETE_RULE,INDEX_NAME,NON_UNIQUE,INDEX_TYPE,SEQ_IN_INDEX
+gst_rate_rules,id,int,NULL,10,0,NO,NULL,auto_increment,YES,NO,NULL,NULL,NULL,NULL,PRIMARY,0,BTREE,1
+gst_rate_rules,priority,int,NULL,10,0,NO,100,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,hsn_chapter,varchar,4,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_gst_rules_hsn,1,BTREE,1
+gst_rate_rules,hsn_chapter,varchar,4,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_rules_range,1,BTREE,1
+gst_rate_rules,hsn_start,varchar,10,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_rules_range,1,BTREE,2
+gst_rate_rules,hsn_end,varchar,10,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_rules_range,1,BTREE,3
+gst_rate_rules,description,varchar,255,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,condition_type,enum,18,NULL,NULL,NO,'NONE',,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,threshold_value,decimal,NULL,10,2,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,intra_rate_percent,decimal,NULL,5,2,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,inter_rate_percent,decimal,NULL,5,2,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+gst_rate_rules,effective_from,date,NULL,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_gst_rules_effective,1,BTREE,1
+gst_rate_rules,effective_from,date,NULL,NULL,NULL,NO,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_rules_eff,1,BTREE,1
+gst_rate_rules,effective_to,date,NULL,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_gst_rules_effective,1,BTREE,2
+gst_rate_rules,effective_to,date,NULL,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,idx_rules_eff,1,BTREE,2
+gst_rate_rules,notification_ref,varchar,128,NULL,NULL,YES,NULL,,NO,NO,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL

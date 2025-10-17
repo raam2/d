@@ -1,0 +1,11 @@
+int,varchar,varchar,enum,varchar,tinyint,text,timestamp,timestamp
+id,code,name,account_type,parent_code,is_active,description,created_at,updated_at
+1,1000,CURRENT ASSETS,ASSET,NULL,1,Current Assets,2025-09-19 12:56:58,2025-09-19 12:56:58
+2,1010,Bank Account - Main,ASSET,1000,1,Primary bank account,2025-09-19 12:56:58,2025-09-19 12:56:58
+3,1020,Bank Account - Secondary,ASSET,1000,1,Secondary bank account,2025-09-19 12:56:58,2025-09-19 12:56:58
+4,1100,Accounts Receivable,ASSET,1000,1,Money owed by customers,2025-09-19 12:56:58,2025-09-19 12:56:58
+5,1200,Inventory,ASSET,1000,1,Goods for sale,2025-09-19 12:56:58,2025-09-19 12:56:58
+6,1300,Prepaid Expenses,ASSET,1000,1,Prepaid expenses,2025-09-19 12:56:59,2025-09-19 12:56:59
+7,1400,GST INPUT ACCOUNTS,ASSET,1000,1,GST paid on purchases,2025-09-19 12:56:59,2025-09-19 12:56:59
+8,1401,CGST Input,ASSET,1400,1,Central GST paid,2025-09-19 12:56:59,2025-09-19 12:56:59
+9,1402,SGST Input,ASSET,1400,1,State GST paid,2025-09-19 12:56:59,2025-09-19 12:56:59

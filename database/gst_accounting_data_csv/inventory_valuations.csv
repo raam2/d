@@ -1,0 +1,2 @@
+int,int,date,decimal,decimal,decimal,enum,timestamp
+id,item_id,valuation_date,qty_on_hand,unit_cost,total_value,valuation_method,created_at
